@@ -1,0 +1,15 @@
+{
+    "apiErrors": {
+        "401": "Non autorisé - Session expirée",
+        "403": "Accès refusé - Permissions insuffisantes",
+        "404": "Ressource introuvable",
+        "500": "Erreur serveur - Veuillez réessayer plus tard",
+        "default": "Erreur inconnue - Contactez l'administration"
+    },
+    "notifications": {
+        "tokenRefresh": {
+            "success": "Session rafraîchie avec succès",
+            "error": "Échec du rafraîchissement de session"
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "apiErrors": {
+        "401": "Unauthorized - Session expired",
+        "403": "Forbidden - Insufficient permissions",
+        "404": "Resource not found",
+        "500": "Server error - Please try again later",
+        "default": "Unknown error - Please contact administration"
+    },
+    "notifications": {
+        "tokenRefresh": {
+            "success": "Session refreshed successfully",
+            "error": "Failed to refresh session"
+        }
+    }
+}

@@ -1,13 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown } from "lucide-react";
 import logo from "../assets/images/logo.png";
 import InstallPrompt from "@/components/ui/utils/InstallPrompt";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { LanguageContext, useTranslation } from '@/i18n';
 
 export default function HomeScreen() {
     const [showLogin, setShowLogin] = useState(true);
+    const { t } = useTranslation();
+    const { language: currentLanguage, setLanguage } = useContext(LanguageContext);
     const [showPassword, setShowPassword] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const { theme, setTheme } = useTheme();
+    const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'jobseeker' | 'recruiter' | null>(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -29,9 +37,40 @@ export default function HomeScreen() {
     const [backendError, setBackendError] = useState<string>('');
     const [loading, setLoading] = useState(false);
 
+    const changeLanguage = (lng: string) => {
+        setLanguage(lng);
+        setShowLanguageDropdown(false);
+    };
+
     useEffect(() => {
         setIsLoaded(true);
+        setMounted(true);
     }, []);
+
+    const toggleTheme = () => {
+        setTheme(theme === "dark" ? "light" : "dark");
+    };
+
+    const languages = [
+        { value: 'fr', label: 'Français', flag: '🇫🇷' },
+        { value: 'en', label: 'English', flag: '🇺🇸' },
+        { value: 'ar', label: 'العربية', flag: '🇸🇦' }
+    ];
+
+    const currentLanguageInfo = languages.find(lang => lang.value === currentLanguage) || languages[0];
+
+
+
+    if (!mounted) {
+        return (
+            <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,7 +234,7 @@ export default function HomeScreen() {
 
                 console.log("Registration logic here");
                 // Add your registration API call here
-                
+
             } catch (error: any) {
                 console.error('Registration error:', error);
                 if (error.response) {
@@ -254,119 +293,144 @@ export default function HomeScreen() {
     };
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col relative overflow-hidden">
-           <InstallPrompt />
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-24 -right-24 w-96 h-96 bg-linear-to-r from-indigo-200/20 to-blue-200/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-linear-to-r from-blue-200/20 to-slate-200/20 rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-linear-to-r from-indigo-100/10 to-blue-100/10 rounded-full blur-2xl" />
+        <div className="min-h-screen bg-gradient-hero flex flex-col relative overflow-hidden transition-colors duration-300">
+            <InstallPrompt />
+            <div className="fixed flex  top-2 right-5 items-center gap-2 z-20">
+                <div className="relative">
+                    <button
+                        onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                        className="flex items-center gap-1 px-2 py-1 bg-background/80 backdrop-blur-lg border border-border/50 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm"
+                    >
+                        <Languages className="w-3 h-3 text-primary" />
+                        <span className="font-medium text-foreground">
+                            {currentLanguageInfo.value.toUpperCase()}
+                        </span>
+                        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${showLanguageDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showLanguageDropdown && (
+                        <div className="absolute top-full mt-1 right-0 bg-background/95 backdrop-blur-lg border border-border/50 rounded-md shadow-xl py-1 z-50 min-w-[50px]">
+                            {languages.map((language) => (
+                                <button
+                                    key={language.value}
+                                    onClick={() => changeLanguage(language.value)}
+                                    className={`flex items-center justify-center w-full px-2 py-1 transition-colors duration-150 text-sm ${currentLanguage === language.value
+                                        ? 'bg-primary/20 text-primary font-medium'
+                                        : 'text-foreground hover:bg-accent/50'
+                                        }`}
+                                >
+                                    {language.value.toUpperCase()}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <Button
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="w-8 h-8 bg-white/90 backdrop-blur-lg border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-background/80 dark:border-border/50"
+                >
+                    {theme === "dark" ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} className="text-slate-600" />}
+                </Button>
             </div>
 
             <div className="flex-1 flex items-center justify-center px-6 py-12 relative z-10">
                 <div className={`w-full max-w-md transform transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
                     <div className="text-center mb-12">
                         <div className="relative mb-6">
-                            <div className="w-24 h-24 mx-auto bg-linear-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all duration-500 hover:scale-105">
+                            <div className="logo-container w-24 h-24 mx-auto rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 hover:scale-105">
                                 <img
                                     src={logo}
                                     alt="CareerHub Logo"
-                                    className="w-20 h-20 object-contain filter brightness-0 invert"
+                                    className="logo-img w-20 h-20 object-contain"
                                 />
                             </div>
                         </div>
-                        <h1 className="text-4xl font-bold bg-linear-to-r from-gray-900 to-indigo-700 bg-clip-text text-transparent mb-3">
-                            Career<span className="font-light">Hub</span>
+                        <h1 className="app-title text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-3">
+                            {t('apiErrors.401')}<span className="font-light">Hub</span>
                         </h1>
-                        <p className="text-gray-600 text-lg font-light">
+                        <p className="app-subtitle text-lg font-light">
                             Find your dream job or perfect candidate
                         </p>
                     </div>
-
-                    {/* Form Container */}
-                    <div className="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl border border-white/20 p-6">
-
-                        {/* Toggle Switch */}
-                        <div className="flex bg-gray-100 rounded-2xl p-1.5 mb-8">
+                    <div className="form-container card-glass rounded-xl shadow-xl border text-center p-6 transition-colors duration-300">
+                        <div className="toggle-container rounded-2xl p-1.5 mb-8 transition-colors duration-300">
                             <button
                                 onClick={() => { setShowLogin(true); resetForm(); }}
-                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${showLogin
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${showLogin
+                                    ? 'toggle-btn-active shadow-sm'
+                                    : 'toggle-btn-inactive'
                                     }`}
                             >
                                 Login
                             </button>
                             <button
                                 onClick={() => { setShowLogin(false); resetForm(); }}
-                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${!showLogin
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${!showLogin
+                                    ? 'toggle-btn-active shadow-sm'
+                                    : 'toggle-btn-inactive'
                                     }`}
                             >
                                 Register
                             </button>
                         </div>
-
-                        {/* Backend Error/Success Message */}
                         {backendError && (
-                            <div className={`mb-6 p-4 rounded-xl flex items-center space-x-3 ${
-                                backendError.includes('success') 
-                                    ? 'bg-green-50 border border-green-200 text-green-800'
-                                    : 'bg-red-50 border border-red-200 text-red-800'
+                            <div className={`alert-message mb-6 p-4 rounded-xl flex items-center space-x-3 ${backendError.includes('success')
+                                ? 'alert-success'
+                                : 'alert-error'
                                 }`}>
-                                <AlertCircle className={`w-5 h-5 shrink-0 ${
-                                    backendError.includes('success') ? 'text-green-500' : 'text-red-500'
-                                    }`} />
-                                <p className="text-sm font-medium">{backendError}</p>
+                                <AlertCircle className="alert-icon w-5 h-5 shrink-0" />
+                                <p className="alert-text text-sm font-medium">{backendError}</p>
                             </div>
                         )}
-
-                        {/* Login Form */}
                         {showLogin ? (
                             <form onSubmit={handleLogin} className="space-y-5">
                                 <div className="space-y-4">
                                     <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                         <input
                                             type="email"
                                             placeholder="Enter your email"
                                             value={formData.email}
                                             onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className={`w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                            className={`input-field w-full pl-12 pr-4 py-4 rounded-2xl transition-all duration-300 ${errors.email
+                                                ? 'input-error'
+                                                : 'input-normal'
                                                 }`}
                                         />
                                         {errors.email && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                            <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>
                                         )}
                                     </div>
                                     <div className="relative">
-                                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                         <input
                                             type={showPassword ? "text" : "password"}
                                             placeholder="Enter your password"
                                             value={formData.password}
                                             onChange={(e) => handleInputChange('password', e.target.value)}
-                                            className={`w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                            className={`input-field w-full pl-12 pr-12 py-4 rounded-2xl transition-all duration-300 ${errors.password
+                                                ? 'input-error'
+                                                : 'input-normal'
                                                 }`}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                            className="password-toggle-btn absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                         </button>
                                         {errors.password && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                                            <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Forgot Password */}
                                 <div className="text-right">
-                                    <button type="button" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                                    <button type="button" className="forgot-password-btn text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                                         Forgot password?
                                     </button>
                                 </div>
@@ -375,7 +439,7 @@ export default function HomeScreen() {
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-linear-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="login-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? (
                                         <div className="flex items-center justify-center">
@@ -396,29 +460,29 @@ export default function HomeScreen() {
                                 {/* Role Selection */}
                                 {!selectedRole ? (
                                     <div className="space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 text-center mb-4">Choose Your Role</h3>
+                                        <h3 className="role-title text-lg font-semibold text-center mb-4 text-foreground">Choose Your Role</h3>
                                         <div className="grid grid-cols-1 gap-4">
                                             <button
                                                 onClick={() => setSelectedRole('jobseeker')}
-                                                className="p-4 border-2 border-green-200 rounded-2xl hover:border-green-400 hover:bg-green-50 transition-all duration-300 text-left"
+                                                className="role-btn jobseeker-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-600 dark:hover:border-orange-400 dark:hover:bg-orange-900/20"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <Search className="w-8 h-8 text-green-600" />
+                                                    <Search className="role-icon jobseeker-icon w-8 h-8 text-orange-600 dark:text-orange-400" />
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-900">Job Seeker</h4>
-                                                        <p className="text-sm text-gray-600">Find your dream job and apply</p>
+                                                        <h4 className="role-name font-semibold text-foreground">Job Seeker</h4>
+                                                        <p className="role-description text-muted-foreground">Find your dream job and apply</p>
                                                     </div>
                                                 </div>
                                             </button>
                                             <button
                                                 onClick={() => setSelectedRole('recruiter')}
-                                                className="p-4 border-2 border-blue-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 text-left"
+                                                className="role-btn recruiter-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-600 dark:hover:border-blue-400 dark:hover:bg-blue-900/20"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <Building className="w-8 h-8 text-blue-600" />
+                                                    <Building className="role-icon recruiter-icon w-8 h-8 text-blue-600 dark:text-blue-400" />
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-900">Recruiter</h4>
-                                                        <p className="text-sm text-gray-600">Post jobs and find talent</p>
+                                                        <h4 className="role-name font-semibold text-foreground">Recruiter</h4>
+                                                        <p className="role-description text-muted-foreground">Post jobs and find talent</p>
                                                     </div>
                                                 </div>
                                             </button>
@@ -431,11 +495,11 @@ export default function HomeScreen() {
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedRole(null)}
-                                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                                                className="back-btn text-muted-foreground hover:text-foreground transition-colors"
                                             >
                                                 <ArrowRight className="w-5 h-5 transform rotate-180" />
                                             </button>
-                                            <span className="text-sm font-medium text-gray-600 capitalize">{selectedRole} Registration</span>
+                                            <span className="role-indicator text-sm font-medium capitalize text-muted-foreground">{selectedRole} Registration</span>
                                         </div>
 
                                         {/* Common Fields */}
@@ -446,11 +510,12 @@ export default function HomeScreen() {
                                                     placeholder="First Name"
                                                     value={formData.name}
                                                     onChange={(e) => handleInputChange('name', e.target.value)}
-                                                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                        errors.name ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.name
+                                                        ? 'input-error'
+                                                        : 'input-normal'
                                                         }`}
                                                 />
-                                                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                                                {errors.name && <p className="error-text text-red-500 text-sm mt-1">{errors.name}</p>}
                                             </div>
                                             <div>
                                                 <input
@@ -458,96 +523,101 @@ export default function HomeScreen() {
                                                     placeholder="Last Name"
                                                     value={formData.prenom}
                                                     onChange={(e) => handleInputChange('prenom', e.target.value)}
-                                                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                        errors.prenom ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.prenom
+                                                        ? 'input-error'
+                                                        : 'input-normal'
                                                         }`}
                                                 />
-                                                {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
+                                                {errors.prenom && <p className="error-text text-red-500 text-sm mt-1">{errors.prenom}</p>}
                                             </div>
                                         </div>
 
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                            <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                             <input
                                                 type="email"
                                                 placeholder="Email address"
                                                 value={formData.email}
                                                 onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                    errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.email
+                                                    ? 'input-error'
+                                                    : 'input-normal'
                                                     }`}
                                             />
-                                            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                                            {errors.email && <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>}
                                         </div>
 
                                         <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                            <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 placeholder="Create password"
                                                 value={formData.password}
                                                 onChange={(e) => handleInputChange('password', e.target.value)}
-                                                className={`w-full pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                    errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                className={`input-field w-full pl-12 pr-12 py-3 rounded-xl transition-all duration-300 ${errors.password
+                                                    ? 'input-error'
+                                                    : 'input-normal'
                                                     }`}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                className="password-toggle-btn absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                             >
                                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
-                                            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                                            {errors.password && <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>}
                                         </div>
 
                                         <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                             <input
                                                 type="tel"
                                                 placeholder="Phone Number"
                                                 value={formData.phone}
                                                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                    errors.phone ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.phone
+                                                    ? 'input-error'
+                                                    : 'input-normal'
                                                     }`}
                                             />
-                                            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                                            {errors.phone && <p className="error-text text-red-500 text-sm mt-1">{errors.phone}</p>}
                                         </div>
 
                                         {/* Job Seeker Specific Fields */}
                                         {selectedRole === 'jobseeker' && (
                                             <>
                                                 <div className="relative">
-                                                    <IdCard className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                    <IdCard className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                                     <input
                                                         type="text"
                                                         placeholder="CIN"
                                                         value={formData.cin}
                                                         onChange={(e) => handleInputChange('cin', e.target.value)}
-                                                        className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                            errors.cin ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                        className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.cin
+                                                            ? 'input-error'
+                                                            : 'input-normal'
                                                             }`}
                                                     />
-                                                    {errors.cin && <p className="text-red-500 text-sm mt-1">{errors.cin}</p>}
+                                                    {errors.cin && <p className="error-text text-red-500 text-sm mt-1">{errors.cin}</p>}
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-gray-700">Resume *</label>
-                                                    <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 cursor-pointer transition-colors">
+                                                    <label className="file-label text-sm font-medium text-foreground">Resume *</label>
+                                                    <label className="file-upload-area flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
                                                         <input
                                                             type="file"
                                                             className="hidden"
                                                             accept=".pdf,.doc,.docx"
                                                             onChange={(e) => handleFileChange('resume', e.target.files?.[0] || null)}
                                                         />
-                                                        <Briefcase className="w-8 h-8 text-gray-400 mb-2" />
-                                                        <span className="text-sm text-gray-600">Upload your resume (PDF, DOC, DOCX)</span>
+                                                        <Briefcase className="file-icon w-8 h-8 mb-2 text-muted-foreground" />
+                                                        <span className="file-text text-sm text-muted-foreground">Upload your resume (PDF, DOC, DOCX)</span>
                                                         {formData.resume && (
-                                                            <span className="text-xs text-indigo-600 mt-1">{formData.resume.name}</span>
+                                                            <span className="file-name text-xs mt-1 text-primary">{formData.resume.name}</span>
                                                         )}
                                                     </label>
-                                                    {errors.resume && <p className="text-red-500 text-sm mt-1">{errors.resume}</p>}
+                                                    {errors.resume && <p className="error-text text-red-500 text-sm mt-1">{errors.resume}</p>}
                                                 </div>
                                             </>
                                         )}
@@ -556,17 +626,18 @@ export default function HomeScreen() {
                                         {selectedRole === 'recruiter' && (
                                             <>
                                                 <div className="relative">
-                                                    <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                    <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                                     <input
                                                         type="text"
                                                         placeholder="Company Name"
                                                         value={formData.company}
                                                         onChange={(e) => handleInputChange('company', e.target.value)}
-                                                        className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                            errors.company ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                        className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.company
+                                                            ? 'input-error'
+                                                            : 'input-normal'
                                                             }`}
                                                     />
-                                                    {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
+                                                    {errors.company && <p className="error-text text-red-500 text-sm mt-1">{errors.company}</p>}
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
@@ -576,11 +647,12 @@ export default function HomeScreen() {
                                                             placeholder="Your Position"
                                                             value={formData.position}
                                                             onChange={(e) => handleInputChange('position', e.target.value)}
-                                                            className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                                errors.position ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.position
+                                                                ? 'input-error'
+                                                                : 'input-normal'
                                                                 }`}
                                                         />
-                                                        {errors.position && <p className="text-red-500 text-sm mt-1">{errors.position}</p>}
+                                                        {errors.position && <p className="error-text text-red-500 text-sm mt-1">{errors.position}</p>}
                                                     </div>
                                                     <div>
                                                         <input
@@ -588,38 +660,39 @@ export default function HomeScreen() {
                                                             placeholder="Industry"
                                                             value={formData.industry}
                                                             onChange={(e) => handleInputChange('industry', e.target.value)}
-                                                            className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${
-                                                                errors.industry ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.industry
+                                                                ? 'input-error'
+                                                                : 'input-normal'
                                                                 }`}
                                                         />
-                                                        {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry}</p>}
+                                                        {errors.industry && <p className="error-text text-red-500 text-sm mt-1">{errors.industry}</p>}
                                                     </div>
                                                 </div>
 
                                                 <div className="relative">
-                                                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                                     <input
                                                         type="url"
                                                         placeholder="Company Website (optional)"
                                                         value={formData.website}
                                                         onChange={(e) => handleInputChange('website', e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300"
+                                                        className="input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 input-normal"
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-gray-700">Company Logo (optional)</label>
-                                                    <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 cursor-pointer transition-colors">
+                                                    <label className="file-label text-sm font-medium text-foreground">Company Logo (optional)</label>
+                                                    <label className="file-upload-area flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
                                                         <input
                                                             type="file"
                                                             className="hidden"
                                                             accept=".jpg,.jpeg,.png"
                                                             onChange={(e) => handleFileChange('companyLogo', e.target.files?.[0] || null)}
                                                         />
-                                                        <Building className="w-6 h-6 text-gray-400 mb-1" />
-                                                        <span className="text-xs text-gray-600">Upload company logo</span>
+                                                        <Building className="file-icon w-6 h-6 mb-1 text-muted-foreground" />
+                                                        <span className="file-text text-xs text-muted-foreground">Upload company logo</span>
                                                         {formData.companyLogo && (
-                                                            <span className="text-xs text-indigo-600 mt-1">{formData.companyLogo.name}</span>
+                                                            <span className="file-name text-xs mt-1 text-primary">{formData.companyLogo.name}</span>
                                                         )}
                                                     </label>
                                                 </div>
@@ -627,22 +700,21 @@ export default function HomeScreen() {
                                         )}
 
                                         {/* Terms Agreement */}
-                                        <div className="text-center text-sm text-gray-600">
+                                        <div className="terms-agreement text-center text-sm text-muted-foreground">
                                             By registering, you agree to our{" "}
-                                            <button type="button" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                                            <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
                                                 Terms
                                             </button>{" "}
                                             and{" "}
-                                            <button type="button" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                                            <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
                                                 Privacy Policy
                                             </button>
                                         </div>
 
-                                        {/* Register Button */}
                                         <Button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="register-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {loading ? (
                                                 <div className="flex items-center justify-center">
@@ -663,11 +735,11 @@ export default function HomeScreen() {
                     </div>
 
                     <div className="text-center mt-8">
-                        <p className="text-gray-500 text-sm">
+                        <p className="auth-switch-text text-sm text-muted-foreground">
                             {showLogin ? "Don't have an account? " : "Already have an account? "}
                             <button
                                 onClick={() => { setShowLogin(!showLogin); resetForm(); }}
-                                className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                                className="auth-switch-btn font-medium text-primary hover:text-primary/80 transition-colors"
                             >
                                 {showLogin ? "Sign up" : "Sign in"}
                             </button>

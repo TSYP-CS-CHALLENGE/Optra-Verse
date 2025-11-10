@@ -4,11 +4,14 @@ import SplashScreen from './components/ui/utils/splashScreen';
 import OnboardingFlow from './components/ui/utils/steps';
 import HomeScreen from './pages/home';
 import NotFoundPage from './components/ui/utils/not_found';
+import { LanguageProvider } from "./i18n";
+import { ThemeProvider } from "./contexts/ThemeProvider";
+
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<'splash' | 'onboarding' | 'main'>('splash');
   const [isLoading, setIsLoading] = useState(true);
-  const  isAuth  = false;
+  const isAuth = false;
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -30,7 +33,7 @@ function AppContent() {
         }
       } catch (error) {
         console.error('Error initializing app:', error);
-        setCurrentView('main'); 
+        setCurrentView('main');
       } finally {
         setIsLoading(false);
       }
@@ -72,54 +75,27 @@ function AppContent() {
       {currentView === 'splash' && (
         <SplashScreen onFinish={handleSplashFinish} />
       )}
-
       {currentView === 'onboarding' && (
         <OnboardingFlow
           onComplete={handleOnboardingComplete}
           onSkip={handleOnboardingSkip}
         />
       )}
-
       {currentView === 'main' && (
         <Router>
-          <Routes>
-            <Route >
-              <Route path="/" element={<HomeScreen />} />
-              <Route path="/login" element={<HomeScreen />} />
-              <Route path="/register" element={<HomeScreen />} />
-            </Route>
-
-            {/* <Route element={<ProtectedRoute allowedRoles={['student', 'non-student']} />}>
-              <Route path="/user/*" element={<UserLayout />}>
-                <Route path="dashboard" element={<UserDashboard />} />
-                <Route path="properties" element={<UserProperties />} />
-              </Route>
-            </Route> */}
-
-            {/* <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/admin/*" element={<AdminLayout />}>
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="users" element={<UsersManagement />} />
-                <Route path="annonces" element={<AnnoncesManagement />} />
-                <Route path="reports" element={<AdminReports />} />
-                <Route path="feedbacks" element={<FeedBackAdmin />} />
-                <Route index element={<Navigate to="dashboard" replace />} />
-              </Route>
-            </Route> */}
-
-            {/* <Route element={<ProtectedRoute allowedRoles={['non-student']} />}>
-              <Route path="/nonstudent/dashboard" element={<NonStudentDashboard />} />
-            </Route> */}
-
-            {/* <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
-              <Route path="/owner/*" element={<OwnerLayout />}>
-                <Route path="dashboard" element={<OwnerDashboard />} />
-                <Route path="annonces" element={<OwnerAnnonces />} />
-                <Route index element={<Navigate to="dashboard" replace />} />
-              </Route>
-            </Route> */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <LanguageProvider>
+              <Routes>
+                <Route >
+                  <Route path="/" element={<HomeScreen />} />
+                  <Route path="/login" element={<HomeScreen />} />
+                  <Route path="/register" element={<HomeScreen />} />
+                </Route>
+                {/* <Route path="unauthorized" element={<UnauthorizedPage />} /> */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </LanguageProvider>
+          </ThemeProvider>
         </Router>
       )}
     </>

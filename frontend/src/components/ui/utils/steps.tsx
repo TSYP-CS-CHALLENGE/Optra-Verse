@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { Search, FileText, Users, Brain, Award, CheckCircle } from "lucide-react"
+import { useTranslation } from "@/i18n";
+
 
 const onboardingSteps = [
   {
@@ -63,7 +65,7 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
   const [currentStep, setCurrentStep] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const totalSteps = onboardingSteps.length
-
+  const { t } = useTranslation();
   const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setIsTransitioning(true)
@@ -100,20 +102,19 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
           <span className="text-sm font-medium text-gray-600">
             {currentStep + 1}/{totalSteps}
           </span>
-          <button 
-            onClick={handleSkip} 
+          <button
+            onClick={handleSkip}
             className="text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md text-sm"
           >
-            Skip
+            {t('apiErrors.401')}
           </button>
         </div>
       </div>
 
       {/* Main Content with Animation */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className={`w-full max-w-md p-8 text-center bg-white rounded-3xl shadow-xl transition-all duration-500 transform ${
-          isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-        }`}>
+        <div className={`w-full max-w-md p-8 text-center bg-white rounded-3xl shadow-xl transition-all duration-500 transform ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          }`}>
           {/* Animated Icon with Emoji */}
           <div className="mb-6 flex justify-center">
             <div className={`w-20 h-20 sm:w-25 sm:h-25 rounded-full ${currentStepData.bgColor} flex items-center justify-center transition-all duration-500 transform hover:scale-110 relative`}>
@@ -124,7 +125,7 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 mb-8 overflow-hidden">
-            <div 
+            <div
               className="h-2 rounded-full bg-linear-to-r from-blue-500 to-blue-600 transition-all duration-700 ease-out"
               style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
             />
@@ -180,31 +181,29 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             <button
               key={index}
               onClick={() => handleDotClick(index)}
-              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 cursor-pointer ${
-                index === currentStep 
-                  ? "bg-linear-to-r from-blue-500 to-blue-600 scale-125" 
-                  : index < currentStep 
-                    ? "bg-blue-500" 
+              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentStep
+                  ? "bg-linear-to-r from-blue-500 to-blue-600 scale-125"
+                  : index < currentStep
+                    ? "bg-blue-500"
                     : "bg-gray-300 hover:bg-gray-400"
-              }`}
+                }`}
               aria-label={`Go to step ${index + 1}`}
             />
           ))}
         </div>
         <div className="flex gap-3">
           {currentStep > 0 && (
-            <button 
+            <button
               onClick={() => handleDotClick(currentStep - 1)}
               className="flex-1 border-2 border-gray-300 text-gray-700 py-4 px-4 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300 hover:border-gray-400"
             >
               Back
             </button>
           )}
-          <button 
-            onClick={handleNext} 
-            className={`flex-1 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-4 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${
-              currentStep === 0 ? 'flex-1' : 'flex-1'
-            }`}
+          <button
+            onClick={handleNext}
+            className={`flex-1 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-4 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${currentStep === 0 ? 'flex-1' : 'flex-1'
+              }`}
           >
             {currentStep === totalSteps - 1 ? (
               <span className="flex items-center justify-center text-sm">
