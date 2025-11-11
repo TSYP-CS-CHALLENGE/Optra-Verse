@@ -1,13 +1,15 @@
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown } from "lucide-react";
-import logo from "../assets/images/logo.png";
-import InstallPrompt from "@/components/ui/utils/InstallPrompt";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown, PlayCircle } from "lucide-react";
+import logo from "@/assets/images/logo.png";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { LanguageContext, useTranslation } from '@/i18n';
+import FooterComponent from "@/components/ui/layouts/utils/Footer";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-export default function HomeScreen() {
+export default function ConnexionPage() {
     const [showLogin, setShowLogin] = useState(true);
     const { t } = useTranslation();
     const { language: currentLanguage, setLanguage } = useContext(LanguageContext);
@@ -16,6 +18,7 @@ export default function HomeScreen() {
     const { theme, setTheme } = useTheme();
     const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const navigate = useNavigate();
     const [selectedRole, setSelectedRole] = useState<'jobseeker' | 'recruiter' | null>(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -58,8 +61,10 @@ export default function HomeScreen() {
     ];
 
     const currentLanguageInfo = languages.find(lang => lang.value === currentLanguage) || languages[0];
-
-
+    const showOnboardingSteps = () => {
+        navigate('/onboarding');
+    };
+    const isRTL = currentLanguage === 'ar';
 
     if (!mounted) {
         return (
@@ -111,15 +116,15 @@ export default function HomeScreen() {
         const newErrors: Record<string, string> = {};
 
         if (!validateRequired(formData.email)) {
-            newErrors.email = 'Email is required';
+            newErrors.email = t('validation.emailRequired');
         } else if (!validateEmail(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
+            newErrors.email = t('forms.invalidEmail');
         }
 
         if (!validateRequired(formData.password)) {
-            newErrors.password = 'Password is required';
+            newErrors.password = t('validation.passwordRequired');
         } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
+            newErrors.password = t('forms.passwordLength');
         }
 
         setErrors(newErrors);
@@ -129,39 +134,39 @@ export default function HomeScreen() {
     const validateRegistrationForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!validateRequired(formData.name)) newErrors.name = 'First name is required';
-        if (!validateRequired(formData.prenom)) newErrors.prenom = 'Last name is required';
+        if (!validateRequired(formData.name)) newErrors.name = t('validation.firstNameRequired');
+        if (!validateRequired(formData.prenom)) newErrors.prenom = t('validation.lastNameRequired');
         if (!validateRequired(formData.email)) {
-            newErrors.email = 'Email is required';
+            newErrors.email = t('validation.emailRequired');
         } else if (!validateEmail(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
+            newErrors.email = t('forms.invalidEmail');
         }
         if (!validateRequired(formData.password)) {
-            newErrors.password = 'Password is required';
+            newErrors.password = t('validation.passwordRequired');
         } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
+            newErrors.password = t('forms.passwordLength');
         }
         if (!validateRequired(formData.phone)) {
-            newErrors.phone = 'Phone number is required';
+            newErrors.phone = t('validation.phoneRequired');
         } else if (!validatePhone(formData.phone)) {
-            newErrors.phone = 'Please enter a valid 8-digit phone number';
+            newErrors.phone = t('forms.invalidPhone');
         }
 
         if (selectedRole === 'jobseeker') {
             if (!validateRequired(formData.cin)) {
-                newErrors.cin = 'CIN is required';
+                newErrors.cin = t('validation.cinRequired');
             } else if (!validateCIN(formData.cin)) {
-                newErrors.cin = 'CIN must be at least 6 characters';
+                newErrors.cin = t('forms.cinLength');
             }
             if (!formData.resume) {
-                newErrors.resume = 'Resume is required';
+                newErrors.resume = t('validation.resumeRequired');
             }
         }
 
         if (selectedRole === 'recruiter') {
-            if (!validateRequired(formData.company)) newErrors.company = 'Company name is required';
-            if (!validateRequired(formData.position)) newErrors.position = 'Your position is required';
-            if (!validateRequired(formData.industry)) newErrors.industry = 'Industry is required';
+            if (!validateRequired(formData.company)) newErrors.company = t('validation.companyRequired');
+            if (!validateRequired(formData.position)) newErrors.position = t('validation.positionRequired');
+            if (!validateRequired(formData.industry)) newErrors.industry = t('validation.industryRequired');
         }
 
         setErrors(newErrors);
@@ -176,7 +181,6 @@ export default function HomeScreen() {
             setLoading(true);
             try {
                 console.log("Login logic here");
-                // Add your login API call here
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {
@@ -233,7 +237,6 @@ export default function HomeScreen() {
                 }
 
                 console.log("Registration logic here");
-                // Add your registration API call here
 
             } catch (error: any) {
                 console.error('Registration error:', error);
@@ -293,9 +296,11 @@ export default function HomeScreen() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-hero flex flex-col relative overflow-hidden transition-colors duration-300">
-            <InstallPrompt />
-            <div className="fixed flex  top-2 right-5 items-center gap-2 z-20">
+        <div
+            className={`min-h-screen bg-gradient-hero flex flex-col relative overflow-hidden transition-colors duration-300 ${isRTL ? 'rtl' : 'ltr'}`}
+            dir={isRTL ? 'rtl' : 'ltr'}
+        >
+            <div className={`fixed flex top-2 ${isRTL ? 'left-5' : 'right-5'} items-center gap-2 z-20`}>
                 <div className="relative">
                     <button
                         onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
@@ -309,7 +314,7 @@ export default function HomeScreen() {
                     </button>
 
                     {showLanguageDropdown && (
-                        <div className="absolute top-full mt-1 right-0 bg-background/95 backdrop-blur-lg border border-border/50 rounded-md shadow-xl py-1 z-50 min-w-[50px]">
+                        <div className={`absolute top-full mt-1 ${isRTL ? 'left-0' : 'right-0'} bg-background/95 backdrop-blur-lg border border-border/50 rounded-md shadow-xl py-1 z-50 min-w-[50px]`}>
                             {languages.map((language) => (
                                 <button
                                     key={language.value}
@@ -342,19 +347,34 @@ export default function HomeScreen() {
                             <div className="logo-container w-24 h-24 mx-auto rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 hover:scale-105">
                                 <img
                                     src={logo}
-                                    alt="CareerHub Logo"
+                                    alt="OptraVerse Logo"
                                     className="logo-img w-20 h-20 object-contain"
                                 />
                             </div>
                         </div>
                         <h1 className="app-title text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-3">
-                            {t('apiErrors.401')}<span className="font-light">Hub</span>
+                            Optra<span className="font-light">Verse</span>
                         </h1>
-                        <p className="app-subtitle text-lg font-light">
-                            Find your dream job or perfect candidate
+                        <p className="app-subtitle text-lg font-light mb-6">
+                            {t('app.subtitle')}
                         </p>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="flex justify-center"
+                        >
+                            <button
+                                onClick={showOnboardingSteps}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-400 to-blue-600 hover:from-orange-500 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">                                <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                <span>{t('auth.discoverFeatures')}</span>
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </motion.div>
                     </div>
-                    <div className="form-container card-glass rounded-xl shadow-xl border text-center p-6 transition-colors duration-300">
+
+                    <div className="form-container card-glass rounded-xl shadow-xl border text-center p-5 transition-colors duration-300">
                         <div className="toggle-container rounded-2xl p-1.5 mb-8 transition-colors duration-300">
                             <button
                                 onClick={() => { setShowLogin(true); resetForm(); }}
@@ -363,7 +383,7 @@ export default function HomeScreen() {
                                     : 'toggle-btn-inactive'
                                     }`}
                             >
-                                Login
+                                {t('auth.login')}
                             </button>
                             <button
                                 onClick={() => { setShowLogin(false); resetForm(); }}
@@ -372,9 +392,10 @@ export default function HomeScreen() {
                                     : 'toggle-btn-inactive'
                                     }`}
                             >
-                                Register
+                                {t('auth.register')}
                             </button>
                         </div>
+
                         {backendError && (
                             <div className={`alert-message mb-6 p-4 rounded-xl flex items-center space-x-3 ${backendError.includes('success')
                                 ? 'alert-success'
@@ -384,17 +405,18 @@ export default function HomeScreen() {
                                 <p className="alert-text text-sm font-medium">{backendError}</p>
                             </div>
                         )}
+
                         {showLogin ? (
                             <form onSubmit={handleLogin} className="space-y-5">
                                 <div className="space-y-4">
                                     <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                        <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                         <input
                                             type="email"
-                                            placeholder="Enter your email"
+                                            placeholder={t('auth.email')}
                                             value={formData.email}
                                             onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className={`input-field w-full pl-12 pr-4 py-4 rounded-2xl transition-all duration-300 ${errors.email
+                                            className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-4 rounded-2xl transition-all duration-300 ${errors.email
                                                 ? 'input-error'
                                                 : 'input-normal'
                                                 }`}
@@ -404,13 +426,13 @@ export default function HomeScreen() {
                                         )}
                                     </div>
                                     <div className="relative">
-                                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                        <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                         <input
                                             type={showPassword ? "text" : "password"}
-                                            placeholder="Enter your password"
+                                            placeholder={t('auth.password')}
                                             value={formData.password}
                                             onChange={(e) => handleInputChange('password', e.target.value)}
-                                            className={`input-field w-full pl-12 pr-12 py-4 rounded-2xl transition-all duration-300 ${errors.password
+                                            className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-12' : 'pr-12'} py-4 rounded-2xl transition-all duration-300 ${errors.password
                                                 ? 'input-error'
                                                 : 'input-normal'
                                                 }`}
@@ -418,7 +440,7 @@ export default function HomeScreen() {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="password-toggle-btn absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                            className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
                                         >
                                             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                         </button>
@@ -429,9 +451,9 @@ export default function HomeScreen() {
                                 </div>
 
                                 {/* Forgot Password */}
-                                <div className="text-right">
+                                <div className={`text-${isRTL ? 'left' : 'right'}`}>
                                     <button type="button" className="forgot-password-btn text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                                        Forgot password?
+                                        {t('auth.forgotPassword')}
                                     </button>
                                 </div>
 
@@ -444,12 +466,12 @@ export default function HomeScreen() {
                                     {loading ? (
                                         <div className="flex items-center justify-center">
                                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            <span>Signing in...</span>
+                                            <span>{t('buttons.signingIn')}</span>
                                         </div>
                                     ) : (
                                         <>
-                                            <span>Sign In</span>
-                                            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                            <span>{t('auth.signIn')}</span>
+                                            <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
                                         </>
                                     )}
                                 </Button>
@@ -460,17 +482,20 @@ export default function HomeScreen() {
                                 {/* Role Selection */}
                                 {!selectedRole ? (
                                     <div className="space-y-4">
-                                        <h3 className="role-title text-lg font-semibold text-center mb-4 text-foreground">Choose Your Role</h3>
+                                        <h3 className="role-title text-lg font-semibold text-center mb-4 text-foreground">{t('roles.chooseRole')}</h3>
                                         <div className="grid grid-cols-1 gap-4">
                                             <button
-                                                onClick={() => setSelectedRole('jobseeker')}
+                                                onClick={() => {
+                                                    setSelectedRole('jobseeker'); setErrors({});
+                                                    setBackendError('');
+                                                }}
                                                 className="role-btn jobseeker-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-600 dark:hover:border-orange-400 dark:hover:bg-orange-900/20"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <Search className="role-icon jobseeker-icon w-8 h-8 text-orange-600 dark:text-orange-400" />
-                                                    <div>
-                                                        <h4 className="role-name font-semibold text-foreground">Job Seeker</h4>
-                                                        <p className="role-description text-muted-foreground">Find your dream job and apply</p>
+                                                    <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                                                        <h4 className="role-name font-semibold text-foreground">{t('roles.jobseeker')}</h4>
+                                                        <p className="role-description text-muted-foreground">{t('roles.jobseekerDesc')}</p>
                                                     </div>
                                                 </div>
                                             </button>
@@ -480,9 +505,9 @@ export default function HomeScreen() {
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <Building className="role-icon recruiter-icon w-8 h-8 text-blue-600 dark:text-blue-400" />
-                                                    <div>
-                                                        <h4 className="role-name font-semibold text-foreground">Recruiter</h4>
-                                                        <p className="role-description text-muted-foreground">Post jobs and find talent</p>
+                                                    <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                                                        <h4 className="role-name font-semibold text-foreground">{t('roles.recruiter')}</h4>
+                                                        <p className="role-description text-muted-foreground">{t('roles.recruiterDesc')}</p>
                                                     </div>
                                                 </div>
                                             </button>
@@ -497,9 +522,11 @@ export default function HomeScreen() {
                                                 onClick={() => setSelectedRole(null)}
                                                 className="back-btn text-muted-foreground hover:text-foreground transition-colors"
                                             >
-                                                <ArrowRight className="w-5 h-5 transform rotate-180" />
+                                                <ArrowRight className={`w-5 h-5 transform ${isRTL ? 'rotate-0' : 'rotate-180'}`} />
                                             </button>
-                                            <span className="role-indicator text-sm font-medium capitalize text-muted-foreground">{selectedRole} Registration</span>
+                                            <span className="role-indicator text-sm font-medium capitalize text-muted-foreground">
+                                                {t(`roles.${selectedRole}`)} {t('roles.registration')}
+                                            </span>
                                         </div>
 
                                         {/* Common Fields */}
@@ -507,7 +534,7 @@ export default function HomeScreen() {
                                             <div>
                                                 <input
                                                     type="text"
-                                                    placeholder="First Name"
+                                                    placeholder={t('auth.firstName')}
                                                     value={formData.name}
                                                     onChange={(e) => handleInputChange('name', e.target.value)}
                                                     className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.name
@@ -520,7 +547,7 @@ export default function HomeScreen() {
                                             <div>
                                                 <input
                                                     type="text"
-                                                    placeholder="Last Name"
+                                                    placeholder={t('auth.lastName')}
                                                     value={formData.prenom}
                                                     onChange={(e) => handleInputChange('prenom', e.target.value)}
                                                     className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.prenom
@@ -533,13 +560,13 @@ export default function HomeScreen() {
                                         </div>
 
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                            <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                             <input
                                                 type="email"
-                                                placeholder="Email address"
+                                                placeholder={t('auth.email')}
                                                 value={formData.email}
                                                 onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.email
+                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.email
                                                     ? 'input-error'
                                                     : 'input-normal'
                                                     }`}
@@ -548,13 +575,13 @@ export default function HomeScreen() {
                                         </div>
 
                                         <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                            <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                             <input
                                                 type={showPassword ? "text" : "password"}
-                                                placeholder="Create password"
+                                                placeholder={t('auth.password')}
                                                 value={formData.password}
                                                 onChange={(e) => handleInputChange('password', e.target.value)}
-                                                className={`input-field w-full pl-12 pr-12 py-3 rounded-xl transition-all duration-300 ${errors.password
+                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-12' : 'pr-12'} py-3 rounded-xl transition-all duration-300 ${errors.password
                                                     ? 'input-error'
                                                     : 'input-normal'
                                                     }`}
@@ -562,7 +589,7 @@ export default function HomeScreen() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="password-toggle-btn absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
                                             >
                                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
@@ -570,13 +597,13 @@ export default function HomeScreen() {
                                         </div>
 
                                         <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                            <Phone className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                             <input
                                                 type="tel"
-                                                placeholder="Phone Number"
+                                                placeholder={t('auth.phone')}
                                                 value={formData.phone}
                                                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.phone
+                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.phone
                                                     ? 'input-error'
                                                     : 'input-normal'
                                                     }`}
@@ -588,13 +615,13 @@ export default function HomeScreen() {
                                         {selectedRole === 'jobseeker' && (
                                             <>
                                                 <div className="relative">
-                                                    <IdCard className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                                    <IdCard className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                                     <input
                                                         type="text"
-                                                        placeholder="CIN"
+                                                        placeholder={t('forms.cin')}
                                                         value={formData.cin}
                                                         onChange={(e) => handleInputChange('cin', e.target.value)}
-                                                        className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.cin
+                                                        className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.cin
                                                             ? 'input-error'
                                                             : 'input-normal'
                                                             }`}
@@ -603,7 +630,7 @@ export default function HomeScreen() {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="file-label text-sm font-medium text-foreground">Resume *</label>
+                                                    <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadResume')} *</label>
                                                     <label className="file-upload-area flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
                                                         <input
                                                             type="file"
@@ -612,7 +639,7 @@ export default function HomeScreen() {
                                                             onChange={(e) => handleFileChange('resume', e.target.files?.[0] || null)}
                                                         />
                                                         <Briefcase className="file-icon w-8 h-8 mb-2 text-muted-foreground" />
-                                                        <span className="file-text text-sm text-muted-foreground">Upload your resume (PDF, DOC, DOCX)</span>
+                                                        <span className="file-text text-sm text-muted-foreground">{t('forms.uploadResume')}</span>
                                                         {formData.resume && (
                                                             <span className="file-name text-xs mt-1 text-primary">{formData.resume.name}</span>
                                                         )}
@@ -626,13 +653,13 @@ export default function HomeScreen() {
                                         {selectedRole === 'recruiter' && (
                                             <>
                                                 <div className="relative">
-                                                    <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                                    <Building className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                                     <input
                                                         type="text"
-                                                        placeholder="Company Name"
+                                                        placeholder={t('forms.companyName')}
                                                         value={formData.company}
                                                         onChange={(e) => handleInputChange('company', e.target.value)}
-                                                        className={`input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 ${errors.company
+                                                        className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.company
                                                             ? 'input-error'
                                                             : 'input-normal'
                                                             }`}
@@ -644,7 +671,7 @@ export default function HomeScreen() {
                                                     <div>
                                                         <input
                                                             type="text"
-                                                            placeholder="Your Position"
+                                                            placeholder={t('forms.position')}
                                                             value={formData.position}
                                                             onChange={(e) => handleInputChange('position', e.target.value)}
                                                             className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.position
@@ -657,7 +684,7 @@ export default function HomeScreen() {
                                                     <div>
                                                         <input
                                                             type="text"
-                                                            placeholder="Industry"
+                                                            placeholder={t('forms.industry')}
                                                             value={formData.industry}
                                                             onChange={(e) => handleInputChange('industry', e.target.value)}
                                                             className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.industry
@@ -670,10 +697,10 @@ export default function HomeScreen() {
                                                 </div>
 
                                                 <div className="relative">
-                                                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                                    <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                                     <input
                                                         type="url"
-                                                        placeholder="Company Website (optional)"
+                                                        placeholder={t('forms.website')}
                                                         value={formData.website}
                                                         onChange={(e) => handleInputChange('website', e.target.value)}
                                                         className="input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 input-normal"
@@ -681,7 +708,7 @@ export default function HomeScreen() {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="file-label text-sm font-medium text-foreground">Company Logo (optional)</label>
+                                                    <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadLogo')}</label>
                                                     <label className="file-upload-area flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
                                                         <input
                                                             type="file"
@@ -690,7 +717,7 @@ export default function HomeScreen() {
                                                             onChange={(e) => handleFileChange('companyLogo', e.target.files?.[0] || null)}
                                                         />
                                                         <Building className="file-icon w-6 h-6 mb-1 text-muted-foreground" />
-                                                        <span className="file-text text-xs text-muted-foreground">Upload company logo</span>
+                                                        <span className="file-text text-xs text-muted-foreground">{t('forms.uploadLogo')}</span>
                                                         {formData.companyLogo && (
                                                             <span className="file-name text-xs mt-1 text-primary">{formData.companyLogo.name}</span>
                                                         )}
@@ -699,15 +726,14 @@ export default function HomeScreen() {
                                             </>
                                         )}
 
-                                        {/* Terms Agreement */}
                                         <div className="terms-agreement text-center text-sm text-muted-foreground">
-                                            By registering, you agree to our{" "}
+                                            {t('legal.agreement')}{" "}
                                             <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
-                                                Terms
+                                                {t('legal.terms')}
                                             </button>{" "}
-                                            and{" "}
+                                            {t('common.and')}{" "}
                                             <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
-                                                Privacy Policy
+                                                {t('legal.privacyPolicy')}
                                             </button>
                                         </div>
 
@@ -719,12 +745,12 @@ export default function HomeScreen() {
                                             {loading ? (
                                                 <div className="flex items-center justify-center">
                                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                    <span>Registering...</span>
+                                                    <span>{t('buttons.registering')}</span>
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <span>Create {selectedRole} Account</span>
-                                                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                    <span>{t('buttons.createAccount')}</span>
+                                                    <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
                                                 </>
                                             )}
                                         </Button>
@@ -736,17 +762,18 @@ export default function HomeScreen() {
 
                     <div className="text-center mt-8">
                         <p className="auth-switch-text text-sm text-muted-foreground">
-                            {showLogin ? "Don't have an account? " : "Already have an account? "}
+                            {showLogin ? t('auth.noAccount') : t('auth.hasAccount')}{" "}
                             <button
                                 onClick={() => { setShowLogin(!showLogin); resetForm(); }}
                                 className="auth-switch-btn font-medium text-primary hover:text-primary/80 transition-colors"
                             >
-                                {showLogin ? "Sign up" : "Sign in"}
+                                {showLogin ? t('auth.signUp') : t('auth.signIn')}
                             </button>
                         </p>
                     </div>
                 </div>
             </div>
-        </div>
+            <FooterComponent />
+        </div >
     );
 }

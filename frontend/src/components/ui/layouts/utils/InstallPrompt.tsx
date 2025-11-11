@@ -8,6 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useTranslation } from '@/i18n';
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -19,15 +20,12 @@ const InstallPrompt: React.FC = () => {
         useState<BeforeInstallPromptEvent | null>(null);
     const [isIOS, setIsIOS] = useState(false);
     const [showModal, setShowModal] = useState(false);
-
+    const { t } = useTranslation();
     useEffect(() => {
-        // Detect iOS devices
-        
         const isIOSDevice =
             /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
         setIsIOS(isIOSDevice);
 
-        // Handle beforeinstallprompt for Android/desktop
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -61,26 +59,26 @@ const InstallPrompt: React.FC = () => {
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {isIOS ? 'Install the app' : 'Add to Home Screen'}
+                        {isIOS ? t('install.ios.title') : t('install.android.title')}
                     </DialogTitle>
                     <DialogDescription>
                         {isIOS ? (
-                            <>
-                                To install this app on your iPhone/iPad:
-                                <ol className="list-decimal pl-5 mt-2">
+                            <div className="space-y-2">
+                                <p>{t('install.ios.description')}</p>
+                                <ol className="list-decimal pl-5 space-y-1 mt-2">
                                     <li>
-                                        Tap the <strong>Share</strong> button in Safari.
+                                        {t('install.ios.step1')}
                                     </li>
                                     <li>
-                                        Select <strong>Add to Home Screen</strong>.
+                                        {t('install.ios.step2')}
                                     </li>
                                     <li>
-                                        Confirm by tapping <strong>Add</strong>.
+                                        {t('install.ios.step3')}
                                     </li>
                                 </ol>
-                            </>
+                            </div>
                         ) : (
-                            'Install our app for the best experience and quick access from your home screen.'
+                            t('install.android.description')
                         )}
                     </DialogDescription>
                 </DialogHeader>
@@ -88,14 +86,16 @@ const InstallPrompt: React.FC = () => {
                 <DialogFooter>
                     {isIOS ? (
                         <Button variant="outline" onClick={handleClose}>
-                            Close
+                            {t('install.buttons.close')}
                         </Button>
                     ) : (
                         <>
                             <Button variant="outline" onClick={handleClose}>
-                                Cancel
+                                {t('install.buttons.cancel')}
                             </Button>
-                            <Button onClick={handleInstallClick}>Install</Button>
+                            <Button onClick={handleInstallClick}>
+                                {t('install.buttons.install')}
+                            </Button>
                         </>
                     )}
                 </DialogFooter>
