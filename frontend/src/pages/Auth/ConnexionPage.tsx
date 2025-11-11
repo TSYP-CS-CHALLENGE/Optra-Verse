@@ -8,6 +8,9 @@ import { LanguageContext, useTranslation } from '@/i18n';
 import FooterComponent from "@/components/ui/layouts/utils/Footer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { login, register } from '@/services/auth/auth_service';
+import type { LoginCredentials } from "@/models/AuthModels";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ConnexionPage() {
     const [showLogin, setShowLogin] = useState(true);
@@ -16,6 +19,7 @@ export default function ConnexionPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const { theme, setTheme } = useTheme();
+    const { LoginUser } = useAuth();
     const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
     const [mounted, setMounted] = useState(false);
     const navigate = useNavigate();
@@ -180,7 +184,13 @@ export default function ConnexionPage() {
         if (validateLoginForm()) {
             setLoading(true);
             try {
-                console.log("Login logic here");
+                const credentials: LoginCredentials = {
+                    email: formData.email,
+                    password: formData.password
+                };
+                const response = await login(credentials);
+                LoginUser(response.user);
+                console.log('Login successful:', response);                
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {
@@ -235,8 +245,8 @@ export default function ConnexionPage() {
                         userRegister.append('company_logo', formData.companyLogo);
                     }
                 }
-
-                console.log("Registration logic here");
+                const response = await register(userRegister);
+                console.log('Registration successful:', response);
 
             } catch (error: any) {
                 console.error('Registration error:', error);
@@ -367,7 +377,8 @@ export default function ConnexionPage() {
                         >
                             <button
                                 onClick={showOnboardingSteps}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-400 to-blue-600 hover:from-orange-500 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">                                <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-400 to-blue-600 hover:from-orange-500 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">
+                                <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                 <span>{t('auth.discoverFeatures')}</span>
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
@@ -409,43 +420,47 @@ export default function ConnexionPage() {
                         {showLogin ? (
                             <form onSubmit={handleLogin} className="space-y-5">
                                 <div className="space-y-4">
-                                    <div className="relative">
-                                        <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                        <input
-                                            type="email"
-                                            placeholder={t('auth.email')}
-                                            value={formData.email}
-                                            onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-4 rounded-2xl transition-all duration-300 ${errors.email
-                                                ? 'input-error'
-                                                : 'input-normal'
-                                                }`}
-                                        />
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                            <input
+                                                type="email"
+                                                placeholder={t('auth.email')}
+                                                value={formData.email}
+                                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                                className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl transition-all duration-300 ${errors.email
+                                                    ? 'input-error'
+                                                    : 'input-normal'
+                                                    }`}
+                                            />
+                                        </div>
                                         {errors.email && (
-                                            <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>
+                                            <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.email}</p>
                                         )}
                                     </div>
-                                    <div className="relative">
-                                        <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder={t('auth.password')}
-                                            value={formData.password}
-                                            onChange={(e) => handleInputChange('password', e.target.value)}
-                                            className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-12' : 'pr-12'} py-4 rounded-2xl transition-all duration-300 ${errors.password
-                                                ? 'input-error'
-                                                : 'input-normal'
-                                                }`}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
-                                        >
-                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                        </button>
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder={t('auth.password')}
+                                                value={formData.password}
+                                                onChange={(e) => handleInputChange('password', e.target.value)}
+                                                className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-4 rounded-2xl transition-all duration-300 ${errors.password
+                                                    ? 'input-error'
+                                                    : 'input-normal'
+                                                    }`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
                                         {errors.password && (
-                                            <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>
+                                            <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.password}</p>
                                         )}
                                     </div>
                                 </div>
@@ -531,7 +546,7 @@ export default function ConnexionPage() {
 
                                         {/* Common Fields */}
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div>
+                                            <div className="space-y-2">
                                                 <input
                                                     type="text"
                                                     placeholder={t('auth.firstName')}
@@ -544,7 +559,7 @@ export default function ConnexionPage() {
                                                 />
                                                 {errors.name && <p className="error-text text-red-500 text-sm mt-1">{errors.name}</p>}
                                             </div>
-                                            <div>
+                                            <div className="space-y-2">
                                                 <input
                                                     type="text"
                                                     placeholder={t('auth.lastName')}
@@ -559,73 +574,81 @@ export default function ConnexionPage() {
                                             </div>
                                         </div>
 
-                                        <div className="relative">
-                                            <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                            <input
-                                                type="email"
-                                                placeholder={t('auth.email')}
-                                                value={formData.email}
-                                                onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.email
-                                                    ? 'input-error'
-                                                    : 'input-normal'
-                                                    }`}
-                                            />
+                                        <div className="space-y-2">
+                                            <div className="relative">
+                                                <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                <input
+                                                    type="email"
+                                                    placeholder={t('auth.email')}
+                                                    value={formData.email}
+                                                    onChange={(e) => handleInputChange('email', e.target.value)}
+                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.email
+                                                        ? 'input-error'
+                                                        : 'input-normal'
+                                                        }`}
+                                                />
+                                            </div>
                                             {errors.email && <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>}
                                         </div>
 
-                                        <div className="relative">
-                                            <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                            <input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder={t('auth.password')}
-                                                value={formData.password}
-                                                onChange={(e) => handleInputChange('password', e.target.value)}
-                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-12' : 'pr-12'} py-3 rounded-xl transition-all duration-300 ${errors.password
-                                                    ? 'input-error'
-                                                    : 'input-normal'
-                                                    }`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
-                                            >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
+                                        <div className="space-y-2">
+                                            <div className="relative">
+                                                <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder={t('auth.password')}
+                                                    value={formData.password}
+                                                    onChange={(e) => handleInputChange('password', e.target.value)}
+                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-3 rounded-xl transition-all duration-300 ${errors.password
+                                                        ? 'input-error'
+                                                        : 'input-normal'
+                                                        }`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
+                                                >
+                                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                </button>
+                                            </div>
                                             {errors.password && <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>}
                                         </div>
 
-                                        <div className="relative">
-                                            <Phone className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                            <input
-                                                type="tel"
-                                                placeholder={t('auth.phone')}
-                                                value={formData.phone}
-                                                onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.phone
-                                                    ? 'input-error'
-                                                    : 'input-normal'
-                                                    }`}
-                                            />
+                                        <div className="space-y-2">
+                                            <div className="relative">
+                                                <Phone className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                <input
+                                                    type="tel"
+                                                    placeholder={t('auth.phone')}
+                                                    value={formData.phone}
+                                                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.phone
+                                                        ? 'input-error'
+                                                        : 'input-normal'
+                                                        }`}
+                                                />
+                                            </div>
                                             {errors.phone && <p className="error-text text-red-500 text-sm mt-1">{errors.phone}</p>}
                                         </div>
 
                                         {/* Job Seeker Specific Fields */}
                                         {selectedRole === 'jobseeker' && (
                                             <>
-                                                <div className="relative">
-                                                    <IdCard className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t('forms.cin')}
-                                                        value={formData.cin}
-                                                        onChange={(e) => handleInputChange('cin', e.target.value)}
-                                                        className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.cin
-                                                            ? 'input-error'
-                                                            : 'input-normal'
-                                                            }`}
-                                                    />
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <IdCard className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                        <input
+                                                            type="text"
+                                                            placeholder={t('forms.cin')}
+                                                            value={formData.cin}
+                                                            onChange={(e) => handleInputChange('cin', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.cin
+                                                                ? 'input-error'
+                                                                : 'input-normal'
+                                                                }`}
+                                                        />
+                                                    </div>
                                                     {errors.cin && <p className="error-text text-red-500 text-sm mt-1">{errors.cin}</p>}
                                                 </div>
 
@@ -652,23 +675,25 @@ export default function ConnexionPage() {
                                         {/* Recruiter Specific Fields */}
                                         {selectedRole === 'recruiter' && (
                                             <>
-                                                <div className="relative">
-                                                    <Building className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t('forms.companyName')}
-                                                        value={formData.company}
-                                                        onChange={(e) => handleInputChange('company', e.target.value)}
-                                                        className={`input-field w-full ${isRTL ? 'pr-12' : 'pl-12'} ${isRTL ? 'pl-4' : 'pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.company
-                                                            ? 'input-error'
-                                                            : 'input-normal'
-                                                            }`}
-                                                    />
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <Building className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                        <input
+                                                            type="text"
+                                                            placeholder={t('forms.companyName')}
+                                                            value={formData.company}
+                                                            onChange={(e) => handleInputChange('company', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.company
+                                                                ? 'input-error'
+                                                                : 'input-normal'
+                                                                }`}
+                                                        />
+                                                    </div>
                                                     {errors.company && <p className="error-text text-red-500 text-sm mt-1">{errors.company}</p>}
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div>
+                                                    <div className="space-y-2">
                                                         <input
                                                             type="text"
                                                             placeholder={t('forms.position')}
@@ -681,7 +706,7 @@ export default function ConnexionPage() {
                                                         />
                                                         {errors.position && <p className="error-text text-red-500 text-sm mt-1">{errors.position}</p>}
                                                     </div>
-                                                    <div>
+                                                    <div className="space-y-2">
                                                         <input
                                                             type="text"
                                                             placeholder={t('forms.industry')}
@@ -696,15 +721,17 @@ export default function ConnexionPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="relative">
-                                                    <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                    <input
-                                                        type="url"
-                                                        placeholder={t('forms.website')}
-                                                        value={formData.website}
-                                                        onChange={(e) => handleInputChange('website', e.target.value)}
-                                                        className="input-field w-full pl-12 pr-4 py-3 rounded-xl transition-all duration-300 input-normal"
-                                                    />
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                        <input
+                                                            type="url"
+                                                            placeholder={t('forms.website')}
+                                                            value={formData.website}
+                                                            onChange={(e) => handleInputChange('website', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 input-normal`}
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <div className="space-y-2">

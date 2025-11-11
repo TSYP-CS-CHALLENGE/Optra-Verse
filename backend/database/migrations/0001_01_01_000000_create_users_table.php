@@ -14,9 +14,22 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('prenom');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['jobseeker', 'recruiter', 'admin'])->default('jobseeker');
+            $table->string('phone')->nullable();
+            $table->string('cin')->nullable()->unique();
+            $table->string('address')->nullable();
+            $table->string('company')->nullable();
+            $table->string('position')->nullable();
+            $table->string('industry')->nullable();
+            $table->string('website')->nullable();
+            $table->string('company_logo')->nullable();
+            $table->string('resume')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->string('profile_picture')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -35,15 +48,13 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };

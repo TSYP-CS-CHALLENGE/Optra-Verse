@@ -9,6 +9,9 @@ import OnboardingFlow from './components/ui/layouts/utils/steps';
 import InstallPrompt from './components/ui/layouts/utils/InstallPrompt';
 import NotFoundPage from './components/ui/layouts/utils/not_found';
 import PrivacyPolicy from './components/ui/layouts/privay_policy';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from './AuthStore/store';
 
 type AppView = 'splash' | 'onboarding' | 'main';
 
@@ -160,11 +163,15 @@ function AppContent() {
 
 function App() {
   return (
-    <Router> 
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <AppContent />
-      </ThemeProvider>
-    </Router>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <Router>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <AppContent />
+          </ThemeProvider>
+        </Router>
+      </PersistGate>
+    </Provider>
   );
 }
 

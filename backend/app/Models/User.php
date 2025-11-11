@@ -33,30 +33,50 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $fillable = [
         'name',
+        'prenom',
         'email',
         'password',
+        'role',
+        'phone',
+        'cin',
+        'address',
+        'company',
+        'position',
+        'industry',
+        'website',
+        'company_logo',
+        'resume',
+        'profile_picture',
+        'is_active'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    public function isJobseeker(): bool
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->role === 'jobseeker';
+    }
+
+    public function isRecruiter(): bool
+    {
+        return $this->role === 'recruiter';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function refreshTokens()
+    {
+        return $this->hasMany(RefreshToken::class);
     }
 }
