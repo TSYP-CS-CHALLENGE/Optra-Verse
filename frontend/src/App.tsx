@@ -4,8 +4,11 @@ import SplashScreen from './components/ui/utils/splashScreen';
 import OnboardingFlow from './components/ui/utils/steps';
 import HomeScreen from './pages/home';
 import NotFoundPage from './components/ui/utils/not_found';
+import InterviewsDashboard from './pages/interviewsDashboard';
+import Session from './pages/session';
 import { LanguageProvider } from "./i18n";
 import { ThemeProvider } from "./contexts/ThemeProvider";
+import SessionSetup from './pages/sessionSetup';
 
 
 function AppContent() {
@@ -90,6 +93,10 @@ function AppContent() {
                   <Route path="/" element={<HomeScreen />} />
                   <Route path="/login" element={<HomeScreen />} />
                   <Route path="/register" element={<HomeScreen />} />
+                  <Route path="/interviewsDashboard" element={<InterviewsDashboard/>} />
+                  <Route path="/Session" element ={<Session/>} />
+                  <Route path="/session-setup" element ={<SessionSetup/>} />
+
                 </Route>
                 {/* <Route path="unauthorized" element={<UnauthorizedPage />} /> */}
                 <Route path="*" element={<NotFoundPage />} />

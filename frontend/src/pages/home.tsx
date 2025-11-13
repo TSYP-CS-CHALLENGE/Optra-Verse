@@ -6,8 +6,11 @@ import InstallPrompt from "@/components/ui/utils/InstallPrompt";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { LanguageContext, useTranslation } from '@/i18n';
+import { useNavigate } from "react-router-dom"
+
 
 export default function HomeScreen() {
+    const onNavigate = useNavigate();
     const [showLogin, setShowLogin] = useState(true);
     const { t } = useTranslation();
     const { language: currentLanguage, setLanguage } = useContext(LanguageContext);
@@ -175,8 +178,7 @@ export default function HomeScreen() {
         if (validateLoginForm()) {
             setLoading(true);
             try {
-                console.log("Login logic here");
-                // Add your login API call here
+                    onNavigate("interviewsDashboard")
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {
