@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { login, register, resendVerificationEmail } from '@/services/auth/auth_service';
 import type { LoginCredentials } from "@/models/AuthModels";
 import { useAuth } from "@/contexts/AuthContext";
+import InstallPrompt from "@/components/ui/layouts/utils/InstallPrompt";
 
 export default function ConnexionPage() {
     const [showLogin, setShowLogin] = useState(true);

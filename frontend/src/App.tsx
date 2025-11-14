@@ -37,17 +37,17 @@ function AppContent() {
   const { theme } = useTheme();
   const isAuth = false;
   const navigate = useNavigate();
-  const location = useLocation(); // Get current location
+  const location = useLocation();
+
+  const isEmailVerificationUrl = () => {
+    return location.pathname === '/auth/verify-email' &&
+      (location.search.includes('success=true') || location.search.includes('success=false'));
+  };
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Check if current URL is email verification
-        const isEmailVerificationUrl = location.pathname === '/auth/verify-email' && 
-          (location.search.includes('success=true') || location.search.includes('success=false'));
-
-        // If it's an email verification URL, skip splash and onboarding
-        if (isEmailVerificationUrl) {
+        if (isEmailVerificationUrl()) {
           setAppState(prev => ({
             ...prev,
             currentView: 'main',
@@ -96,7 +96,7 @@ function AppContent() {
     };
 
     initializeApp();
-  }, [isAuth, location]); // Add location to dependencies
+  }, [isAuth, location]);
 
   const handleSplashFinish = () => {
     sessionStorage.setItem('hasSeenSplash', 'true');
@@ -160,7 +160,6 @@ function AppContent() {
 
       {appState.currentView === 'main' && (
         <LanguageProvider>
-          <InstallPrompt />
           <Routes>
             <Route path="/" element={<ConnexionPage />} />
             <Route path="/login" element={<ConnexionPage />} />
@@ -196,6 +195,7 @@ function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
+        <InstallPrompt />
         <Router>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <AppContent />
