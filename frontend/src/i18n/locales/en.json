@@ -207,7 +207,7 @@
     "getStarted": "Get Started",
     "swipeHint": "Swipe left/right or use buttons to navigate",
     "swipeHintMobile": "Swipe to navigate →",
-     "swipeBack": "Swipe back",
+    "swipeBack": "Swipe back",
     "swipeNext": "Swipe next",
     "steps": {
       "aiCVEnhancer": "AI-Powered CV Enhancement",
@@ -282,8 +282,48 @@
       "contactSupport": "Contact support"
     }
   },
-   "loading": {
+  "loading": {
     "title": "Preparing your experience...",
     "ariaLabel": "Loading content"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "menu": "Main Menu",
+    "profile": "Profile",
+    "logout": "Logout",
+    "quickStats": "Quick Stats",
+    "profileCompletion": "Profile Completion",
+    "jobsApplied": "Jobs Applied",
+    "interviews": "Interviews",
+    "enhanceCV": "Enhance CV",
+    "enhanceCVDesc": "Optimize your resume with AI",
+    "jobMatcher": "Job Matcher",
+    "jobMatcherDesc": "Find your perfect job match",
+    "interviewAI": "AI Video Interview",
+    "interviewAIDesc": "Practice with AI-powered interviews",
+    "uploadCV": "Upload Your CV",
+    "uploadCVDesc": "Upload your current resume for AI analysis and enhancement",
+    "uploadFile": "Upload File",
+    "aiAnalysis": "AI Analysis",
+    "aiAnalysisDesc": "Get personalized suggestions to improve your CV",
+    "analyzeNow": "Analyze Now",
+    "findJobs": "Find Your Dream Job",
+    "findJobsDesc": "Discover jobs that match your skills and preferences",
+    "browseJobs": "Browse Jobs",
+    "setPreferences": "Set Preferences",
+    "practiceInterview": "Practice Interview",
+    "practiceInterviewDesc": "Prepare for real interviews with our AI video platform",
+    "startPractice": "Start Practice",
+    "viewHistory": "View History",
+    "online": "Online",
+    "viewProfile": "View Profile",
+    "mainMenu": "Main Menu",
+    "quickAccess": "Quick Access",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "settings": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "more": "More"
   }
 }

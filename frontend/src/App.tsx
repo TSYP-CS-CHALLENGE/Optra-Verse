@@ -12,6 +12,7 @@ import PrivacyPolicy from './components/ui/layouts/privay_policy';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from './AuthStore/store';
+import JobSeekerDashboard from './pages/JobSeeker/JobSeekerDashboard';
 
 type AppView = 'splash' | 'onboarding' | 'main';
 
@@ -144,6 +145,7 @@ function AppContent() {
             <Route path="/register" element={<ConnexionPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<PrivacyPolicy />} />
+            <Route path="/dashboard" element={<JobSeekerDashboard />} />
             <Route
               path="/onboarding"
               element={

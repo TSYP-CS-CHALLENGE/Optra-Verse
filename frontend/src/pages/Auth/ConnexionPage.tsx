@@ -190,7 +190,7 @@ export default function ConnexionPage() {
                 };
                 const response = await login(credentials);
                 LoginUser(response.user);
-                console.log('Login successful:', response);                
+                 navigate('/dashboard');
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {

@@ -285,5 +285,50 @@
    "loading": {
     "title": "Préparation de votre expérience...",
     "ariaLabel": "Chargement du contenu"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "menu": "Menu Principal",
+    "profile": "Profil",
+    "logout": "Déconnexion",
+    "quickStats": "Statistiques Rapides",
+    "profileCompletion": "Profil Complété",
+    "jobsApplied": "Emplois Postulés",
+    "interviews": "Entretiens",
+    
+    "enhanceCV": "Améliorer CV",
+    "enhanceCVDesc": "Optimisez votre CV avec l'IA",
+    "jobMatcher": "Job Matcher",
+    "jobMatcherDesc": "Trouvez votre emploi idéal",
+    "interviewAI": "Entretien Vidéo IA",
+    "interviewAIDesc": "Pratiquez avec des entretiens IA",
+    
+    "uploadCV": "Télécharger Votre CV",
+    "uploadCVDesc": "Téléchargez votre CV actuel pour analyse et amélioration par IA",
+    "uploadFile": "Télécharger Fichier",
+    "aiAnalysis": "Analyse IA",
+    "aiAnalysisDesc": "Obtenez des suggestions personnalisées pour améliorer votre CV",
+    "analyzeNow": "Analyser Maintenant",
+    
+    "findJobs": "Trouvez Votre Emploi Rêvé",
+    "findJobsDesc": "Découvrez des emplois qui correspondent à vos compétences",
+    "browseJobs": "Parcourir les Emplois",
+    "setPreferences": "Définir Préférences",
+    
+    "practiceInterview": "Entraînement Entretien",
+    "practiceInterviewDesc": "Préparez-vous aux vrais entretiens avec notre plateforme vidéo IA",
+    "startPractice": "Commencer l'Entraînement",
+    "viewHistory": "Voir l'Historique",
+     "online": "En ligne",
+    "viewProfile": "Voir le profil",
+    "mainMenu": "Menu Principal",
+    "quickAccess": "Accès Rapide",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "settings": "Paramètres",
+    "profileViews": "Vues du profil",
+    "language": "Langue",
+    "theme": "Thème",
+    "more": "Plus"
   }
 }

@@ -30,7 +30,7 @@ export const logout = async (): Promise<void> => {
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/auth/me');
+  const response = await api.get('/me');
   return response.data.user;
 };
 
