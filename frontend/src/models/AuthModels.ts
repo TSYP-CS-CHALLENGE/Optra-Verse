@@ -30,9 +30,11 @@ export interface User {
   cin?: string;
   company?: string;
   position?: string;
+  profile_picture?: string;
   industry?: string;
   website?: string;
   resume?: string;
+  address?: string;
   company_logo?: string;
   is_active: boolean;
   email_verified_at: string | null;

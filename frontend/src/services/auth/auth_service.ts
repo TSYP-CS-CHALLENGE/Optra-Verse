@@ -35,10 +35,15 @@ export const getCurrentUser = async (): Promise<User> => {
 };
 
 export const updateProfile = async (userData: FormData): Promise<User> => {
-  const response = await api.post('/auth/profile', userData, {
+  const response = await api.post('/profile', userData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
   return response.data.user;
+};
+
+export const resendVerificationEmail = async (email: string) => {
+    const response = await api.post('/auth/verify_resend', { email });
+    return response.data;
 };

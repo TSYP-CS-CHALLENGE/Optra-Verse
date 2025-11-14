@@ -7,12 +7,15 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\UserRole;
+use Illuminate\Auth\Events\Verified;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
-public function register(StoreUserRequest $request)
+    public function register(StoreUserRequest $request)
     {
         try {
             $data = $request->validated();
@@ -48,12 +51,11 @@ public function register(StoreUserRequest $request)
             }
 
             $user = User::create($userData);
-
+            $user->sendEmailVerificationNotification();
             return response()->json([
                 'data' => $user,
                 "message" => 'User registered successfully'
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Registration failed',
@@ -63,7 +65,7 @@ public function register(StoreUserRequest $request)
     }
 
 
-     public function login(Request $request)
+    public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
@@ -72,6 +74,13 @@ public function register(StoreUserRequest $request)
         }
 
         $user = JWTAuth::user();
+
+        if (!$user->hasVerifiedEmail()) {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Please verify your email address before logging in.'
+            ], 403);
+        }
 
         if (!$user->is_active) {
             return response()->json(['error' => 'Account deactivated'], 403);
@@ -217,16 +226,117 @@ public function register(StoreUserRequest $request)
             return response()->json([
                 'message' => 'Successfully logged out'
             ])->withCookie($access_token)->withCookie($refresh_token);
-
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to logout'], 500);
         }
     }
 
-      public function me(Request $request)
+    public function me(Request $request)
     {
         return response()->json([
             'user' => $request->user()
         ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'prenom' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'sometimes|string|max:20',
+            'address' => 'sometimes|string|max:500',
+            'cin' => 'sometimes|string|max:50|unique:users,cin,' . $user->id,
+            'company' => 'sometimes|string|max:255',
+            'position' => 'sometimes|string|max:255',
+            'industry' => 'sometimes|string|max:255',
+            'website' => 'sometimes|url|max:255',
+            'profile_picture' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'resume' => 'sometimes|file|mimes:pdf,doc,docx,txt|max:5120', // 5MB max
+            'remove_resume' => 'sometimes|boolean'
+        ]);
+
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            $path = $request->file('profile_picture')->store('profile-pictures', 'public');
+            $validated['profile_picture'] = $path;
+        }
+
+        if ($request->hasFile('resume')) {
+            if ($user->resume) {
+                Storage::disk('public')->delete($user->resume);
+            }
+            $path = $request->file('resume')->store('resumes', 'public');
+            $validated['resume'] = $path;
+        } elseif ($request->has('remove_resume') && $request->get('remove_resume') === 'true' && $user->resume) {
+            Storage::disk('public')->delete($user->resume);
+            $validated['resume'] = null;
+        }
+        $user->update($validated);
+        $userData = $user->toArray();
+        if ($user->profile_picture) {
+            $userData['profile_picture_url'] = asset('storage/' . $user->profile_picture);
+        }
+        if ($user->resume) {
+            $userData['resume_url'] = asset('storage/' . $user->resume);
+        }
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $userData
+        ]);
+    }
+
+
+     public function verify(Request $request)
+    {
+        $user = User::find($request->route('id'));
+
+        if (!$user) {
+            return redirect(env('FRONTEND_URL') . '/auth/verify-email?success=false&message=User not found');
+        }
+
+        if (!hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+            return redirect(env('FRONTEND_URL') . '/auth/verify-email?success=false&message=Invalid verification link');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect(env('FRONTEND_URL') . '/auth/verify-email?success=true&message=Email already verified');
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
+
+        return redirect(env('FRONTEND_URL') . '/auth/verify-email?success=true&message=Email verified successfully');
+    }
+
+    public function resend(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email already verified'
+            ], 200);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'message' => 'Verification link sent'
+        ], 200);
     }
 }

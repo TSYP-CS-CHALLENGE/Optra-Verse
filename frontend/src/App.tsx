@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import ConnexionPage from './pages/Auth/ConnexionPage';
 import { LanguageProvider, useTranslation } from "./i18n";
 import { ThemeProvider } from "./contexts/ThemeProvider";
@@ -13,6 +13,11 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from './AuthStore/store';
 import JobSeekerDashboard from './pages/JobSeeker/JobSeekerDashboard';
+import EnhanceCV from './pages/JobSeeker/EnhanceCV';
+import JobMatcher from './pages/JobSeeker/JobMatcher';
+import InterviewAI from './pages/JobSeeker/InterviewAI';
+import Profile from './pages/JobSeeker/Profile';
+import EmailVerification from './pages/Auth/EmailVerification';
 
 type AppView = 'splash' | 'onboarding' | 'main';
 
@@ -31,11 +36,27 @@ function AppContent() {
 
   const { theme } = useTheme();
   const isAuth = false;
-  const navigate = useNavigate(); // Move useNavigate here
+  const navigate = useNavigate();
+  const location = useLocation(); // Get current location
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Check if current URL is email verification
+        const isEmailVerificationUrl = location.pathname === '/auth/verify-email' && 
+          (location.search.includes('success=true') || location.search.includes('success=false'));
+
+        // If it's an email verification URL, skip splash and onboarding
+        if (isEmailVerificationUrl) {
+          setAppState(prev => ({
+            ...prev,
+            currentView: 'main',
+            hasSeenOnboarding: true,
+            isLoading: false
+          }));
+          return;
+        }
+
         await new Promise(resolve => setTimeout(resolve, 800));
 
         const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
@@ -75,12 +96,13 @@ function AppContent() {
     };
 
     initializeApp();
-  }, [isAuth]);
+  }, [isAuth, location]); // Add location to dependencies
 
   const handleSplashFinish = () => {
     sessionStorage.setItem('hasSeenSplash', 'true');
     setAppState(prev => ({ ...prev, currentView: 'onboarding' }));
   };
+
   const { t } = useTranslation();
 
   const handleOnboardingComplete = () => {
@@ -145,7 +167,14 @@ function AppContent() {
             <Route path="/register" element={<ConnexionPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<PrivacyPolicy />} />
-            <Route path="/dashboard" element={<JobSeekerDashboard />} />
+            <Route path="/auth/verify-email" element={<EmailVerification />} />
+            <Route path="/dashboard" element={<JobSeekerDashboard />}>
+              <Route index element={<Navigate to="/dashboard/enhance-cv" replace />} />
+              <Route path="enhance-cv" element={<EnhanceCV />} />
+              <Route path="job-matcher" element={<JobMatcher />} />
+              <Route path="interview" element={<InterviewAI />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
             <Route
               path="/onboarding"
               element={

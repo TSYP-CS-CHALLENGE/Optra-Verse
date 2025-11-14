@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useContext } from "react";
-import logo from "@/assets/images/logo.png"
+import logo from "@/assets/images/logo.jpg"
 import { useTheme } from "next-themes";
 import { LanguageContext, useTranslation } from '@/i18n';
 

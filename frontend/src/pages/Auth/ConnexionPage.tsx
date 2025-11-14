@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown, PlayCircle } from "lucide-react";
-import logo from "@/assets/images/logo.png";
+import logo from "@/assets/images/logo.jpg";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { LanguageContext, useTranslation } from '@/i18n';
 import FooterComponent from "@/components/ui/layouts/utils/Footer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { login, register } from '@/services/auth/auth_service';
+import { login, register, resendVerificationEmail } from '@/services/auth/auth_service';
 import type { LoginCredentials } from "@/models/AuthModels";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -177,6 +177,15 @@ export default function ConnexionPage() {
         return Object.keys(newErrors).length === 0;
     };
 
+    const handleResendVerification = async (email: string) => {
+        try {
+            await resendVerificationEmail(email);
+            setBackendError('Verification email sent! Please check your inbox.');
+        } catch (error) {
+            setBackendError('Failed to resend verification email. Please try again.');
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setBackendError('');
@@ -190,7 +199,7 @@ export default function ConnexionPage() {
                 };
                 const response = await login(credentials);
                 LoginUser(response.user);
-                 navigate('/dashboard');
+                navigate('/dashboard');
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {
@@ -198,7 +207,11 @@ export default function ConnexionPage() {
                         error.response.data?.error ||
                         'Login error';
                     setBackendError(errorMessage);
-
+                    if (errorMessage.includes('verify your email') || error.response.status === 403) {
+                        setBackendError('Please verify your email address before logging in. Check your inbox for the verification link.');
+                    } else {
+                        setBackendError(errorMessage);
+                    }
                     if (error.response.data?.errors) {
                         const fieldErrors = error.response.data.errors;
                         setErrors(fieldErrors);
@@ -414,6 +427,26 @@ export default function ConnexionPage() {
                                 }`}>
                                 <AlertCircle className="alert-icon w-5 h-5 shrink-0" />
                                 <p className="alert-text text-sm font-medium">{backendError}</p>
+                            </div>
+                        )}
+                        {backendError && backendError.includes('verify your email') && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                <div className="flex items-center gap-3">
+                                    <Mail className="w-5 h-5 text-blue-500" />
+                                    <div className="flex-1">
+                                        <p className="text-blue-800 text-sm">
+                                            Didn't receive the verification email?
+                                        </p>
+                                        <Button
+                                            onClick={() => handleResendVerification(formData.email)}
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-2 text-blue-600 border-blue-300 hover:bg-blue-100"
+                                        >
+                                            Resend Verification Email
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
