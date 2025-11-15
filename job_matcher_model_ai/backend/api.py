@@ -172,10 +172,10 @@ async def analyze_resume(
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
     
-    if len(job_description.strip()) < 50:
+    if len(job_description.strip()) < 20:
         raise HTTPException(
             status_code=400, 
-            detail="Job description too short (minimum 50 characters required)"
+            detail="Job description too short (minimum 20 characters required)"
         )
     
     if len(job_description) > 10000:

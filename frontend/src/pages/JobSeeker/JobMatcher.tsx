@@ -2,257 +2,511 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Search, 
-  MapPin, 
-  Briefcase, 
-  DollarSign, 
-  Clock, 
-  Star, 
-  Filter, 
+import {
+  Search,
+  Star,
+  Filter,
   Heart,
-  Share2,
-  Zap,
   Target,
   TrendingUp,
-  Building,
-  Users,
   CheckCircle2,
-  ChevronRight,
   Bookmark,
-  Eye
+  Upload,
+  FileText,
+  AlertCircle,
+  User,
+  Mail,
+  FileEdit,
+  X,
+  Download,
+  Zap,
+  Lightbulb,
+  Brain,
+  Sparkles,
+  MapPin,
+  Briefcase,
+  DollarSign,
+  Clock,
+  Building,
+  ExternalLink,
+  Globe,
+  GraduationCap,
+  Languages,
+  Rocket,
+  BarChart3,
+  Users,
+  Settings,
+  SlidersHorizontal,
+  Github,
+  Linkedin,
+  Code2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslation } from '@/i18n';
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { LanguageContext } from '@/i18n';
+import type { 
+  CVAnalysis, 
+  CVAnalysisForm, 
+  HealthStatus, 
+  JobMatchRequest, 
+  LiveJobSearchRequest,
+  LiveJob,
+  FootprintScanRequest,
+  FootprintScanResponse,
+  CareerInsightsResponse
+} from "@/models/JobMatcher";
+import {
+  analyzeCV,
+  extractSkills,
+  getHealthStatus,
+  matchCVToJobs,
+  searchLiveJobs,
+  scanDigitalFootprint,
+  generateCareerInsights
+} from "@/services/job_matcher_api/jobmatcher_service";
 
 export default function JobMatcher() {
   const { t } = useTranslation();
   const { language: currentLanguage } = useContext(LanguageContext);
   const isRTL = currentLanguage === 'ar';
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [savedJobs, setSavedJobs] = useState<number[]>([]);
 
-  const jobStats = [
-    { label: 'Perfect Matches', value: '12', change: '+3', icon: Target, color: 'text-green-500' },
-    { label: 'Applications Sent', value: '24', change: '+8', icon: Briefcase, color: 'text-blue-500' },
-    { label: 'Interviews', value: '5', change: '+2', icon: Users, color: 'text-purple-500' },
-    { label: 'Response Rate', value: '68%', change: '+12%', icon: TrendingUp, color: 'text-orange-500' }
-  ];
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [cvAnalysis, setCvAnalysis] = useState<CVAnalysis | null>(null);
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
+  const [jobMatches, setJobMatches] = useState<any | null>(null);
+  const [liveJobs, setLiveJobs] = useState<LiveJob[]>([]);
+  const [footprintData, setFootprintData] = useState<FootprintScanResponse | null>(null);
+  const [careerInsights, setCareerInsights] = useState<CareerInsightsResponse | null>(null);
+  const [showCVForm, setShowCVForm] = useState(false);
+  const [showJobPreferences, setShowJobPreferences] = useState(false);
+  const [showFootprintForm, setShowFootprintForm] = useState(false);
+  const [showCareerInsights, setShowCareerInsights] = useState(false);
+  const [activeTab, setActiveTab] = useState<'analysis' | 'skills' | 'matches' | 'live' | 'footprint' | 'insights'>('analysis');
 
-  const filters = [
-    { id: 'all', label: 'All Jobs', count: 47 },
-    { id: 'perfect', label: 'Perfect Match', count: 12 },
-    { id: 'remote', label: 'Remote', count: 18 },
-    { id: 'tech', label: 'Technology', count: 32 },
-    { id: 'high-salary', label: 'High Salary', count: 8 }
-  ];
+  const [cvForm, setCvForm] = useState<CVAnalysisForm>({
+    file: null,
+    job_title: '',
+    job_description: '',
+    candidate_name: '',
+    candidate_email: ''
+  });
 
-  const featuredJobs = [
-    {
-      id: 1,
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Inc.',
-      logo: '🚀',
-      location: 'San Francisco, CA',
-      type: 'Remote',
-      salary: '$120,000 - $150,000',
-      match: 95,
-      skills: ['React', 'TypeScript', 'Next.js', 'Tailwind'],
-      posted: '2 hours ago',
-      urgent: true,
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Full Stack Engineer',
-      company: 'StartupXYZ',
-      logo: '💡',
-      location: 'New York, NY',
-      type: 'Hybrid',
-      salary: '$100,000 - $130,000',
-      match: 87,
-      skills: ['Node.js', 'React', 'MongoDB', 'AWS'],
-      posted: '1 day ago',
-      urgent: false,
-      featured: true
-    },
-    {
-      id: 3,
-      title: 'React Native Developer',
-      company: 'MobileFirst',
-      logo: '📱',
-      location: 'Austin, TX',
-      type: 'Remote',
-      salary: '$90,000 - $120,000',
-      match: 92,
-      skills: ['React Native', 'JavaScript', 'iOS', 'Android'],
-      posted: '3 days ago',
-      urgent: true,
-      featured: false
+  const [jobMatchPreferences, setJobMatchPreferences] = useState<JobMatchRequest>({
+    preferred_locations: ['Dubai', 'Remote'],
+    salary_min: 30000,
+    salary_max: 80000,
+    open_to_remote: true,
+    max_results: 20
+  });
+
+  const [liveSearch, setLiveSearch] = useState<LiveJobSearchRequest>({
+    keywords: '',
+    location: 'Dubai',
+    max_results: 20
+  });
+
+  const [footprintForm, setFootprintForm] = useState<FootprintScanRequest>({
+    github_username: '',
+    linkedin_url: '',
+    stackoverflow_id: ''
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const healthData = await getHealthStatus();
+      setHealthStatus(healthData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const recommendedJobs = [
-    {
-      id: 4,
-      title: 'UI/UX Developer',
-      company: 'DesignHub',
-      logo: '🎨',
-      location: 'Chicago, IL',
-      type: 'On-site',
-      salary: '$85,000 - $110,000',
-      match: 78,
-      skills: ['Figma', 'CSS', 'JavaScript', 'UI Design'],
-      posted: '5 days ago',
-      views: 124
-    },
-    {
-      id: 5,
-      title: 'DevOps Engineer',
-      company: 'CloudSystems',
-      logo: '☁️',
-      location: 'Seattle, WA',
-      type: 'Remote',
-      salary: '$110,000 - $140,000',
-      match: 82,
-      skills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD'],
-      posted: '1 week ago',
-      views: 89
-    },
-    {
-      id: 6,
-      title: 'Backend Developer',
-      company: 'DataFlow',
-      logo: '⚡',
-      location: 'Boston, MA',
-      type: 'Hybrid',
-      salary: '$95,000 - $125,000',
-      match: 91,
-      skills: ['Python', 'Django', 'PostgreSQL', 'Redis'],
-      posted: '2 days ago',
-      views: 156
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      return;
     }
-  ];
 
-  const quickSearches = [
-    { term: 'Remote React Jobs', count: '245', trending: true },
-    { term: 'Senior Developer', count: '189', trending: false },
-    { term: 'Frontend Engineer', count: '167', trending: true },
-    { term: 'Full Stack JavaScript', count: '134', trending: false }
-  ];
+    setCvForm(prev => ({
+      ...prev,
+      file
+    }));
+  };
 
-  const toggleSavedJob = (jobId: number) => {
-    setSavedJobs(prev => 
-      prev.includes(jobId) 
-        ? prev.filter(id => id !== jobId)
-        : [...prev, jobId]
+  const handleCVAnalysis = async () => {
+    if (!cvForm.file || !cvForm.job_title.trim() || !cvForm.job_description.trim()) {
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', cvForm.file);
+      formData.append('job_title', cvForm.job_title);
+      formData.append('job_description', cvForm.job_description);
+
+      if (cvForm.candidate_name.trim()) {
+        formData.append('candidate_name', cvForm.candidate_name);
+      }
+      if (cvForm.candidate_email.trim()) {
+        formData.append('candidate_email', cvForm.candidate_email);
+      }
+
+      const analysis = await analyzeCV(formData);
+      setCvAnalysis(analysis);
+      setActiveTab('analysis');
+
+      setCvForm({
+        file: null,
+        job_title: '',
+        job_description: '',
+        candidate_name: '',
+        candidate_email: ''
+      });
+      setShowCVForm(false);
+
+    } catch (error: any) {
+      console.error('Error analyzing CV:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleExtractSkills = async () => {
+    if (!cvForm.file) return;
+
+    setUploading(true);
+    try {
+      const result = await extractSkills(cvForm.file);
+      setExtractedSkills(result.skills);
+      setActiveTab('skills');
+
+      setCvForm({
+        file: null,
+        job_title: '',
+        job_description: '',
+        candidate_name: '',
+        candidate_email: ''
+      });
+      setShowCVForm(false);
+
+    } catch (error: any) {
+      console.error('Error extracting skills:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleJobMatching = async () => {
+    if (!cvForm.file) return;
+
+    setUploading(true);
+    try {
+      const result = await matchCVToJobs(cvForm.file, jobMatchPreferences);
+      setJobMatches(result);
+      setActiveTab('matches');
+
+      setCvForm({
+        file: null,
+        job_title: '',
+        job_description: '',
+        candidate_name: '',
+        candidate_email: ''
+      });
+      setShowCVForm(false);
+      setShowJobPreferences(false);
+
+    } catch (error: any) {
+      console.error('Error matching jobs:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleLiveSearch = async () => {
+    if (!liveSearch.keywords.trim()) return;
+
+    setUploading(true);
+    try {
+      const result = await searchLiveJobs(liveSearch);
+      setLiveJobs(result.jobs);
+      setActiveTab('live');
+    } catch (error: any) {
+      console.error('Error searching live jobs:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFootprintScan = async () => {
+    if (!footprintForm.github_username && !footprintForm.linkedin_url && !footprintForm.stackoverflow_id) {
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const result = await scanDigitalFootprint(footprintForm);
+      setFootprintData(result);
+      setActiveTab('footprint');
+      setShowFootprintForm(false);
+    } catch (error: any) {
+      console.error('Error scanning footprint:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCareerInsights = async () => {
+    if (!cvForm.file) return;
+
+    setUploading(true);
+    try {
+      const result = await generateCareerInsights(cvForm.file);
+      setCareerInsights(result);
+      setActiveTab('insights');
+      setShowCareerInsights(false);
+      
+      setCvForm({
+        file: null,
+        job_title: '',
+        job_description: '',
+        candidate_name: '',
+        candidate_email: ''
+      });
+    } catch (error: any) {
+      console.error('Error generating insights:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const updateCvForm = (field: keyof CVAnalysisForm, value: string) => {
+    setCvForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const updateJobMatchPreference = (field: keyof JobMatchRequest, value: any) => {
+    setJobMatchPreferences(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const updateLiveSearch = (field: keyof LiveJobSearchRequest, value: string) => {
+    setLiveSearch(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const updateFootprintForm = (field: keyof FootprintScanRequest, value: string) => {
+    setFootprintForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addLocation = (location: string) => {
+    if (location.trim() && !jobMatchPreferences.preferred_locations?.includes(location)) {
+      setJobMatchPreferences(prev => ({
+        ...prev,
+        preferred_locations: [...(prev.preferred_locations || []), location]
+      }));
+    }
+  };
+
+  const removeLocation = (location: string) => {
+    setJobMatchPreferences(prev => ({
+      ...prev,
+      preferred_locations: prev.preferred_locations?.filter(loc => loc !== location) || []
+    }));
+  };
+
+  const clearAnalysis = () => {
+    setCvAnalysis(null);
+    setExtractedSkills([]);
+    setJobMatches(null);
+    setLiveJobs([]);
+    setFootprintData(null);
+    setCareerInsights(null);
+  };
+
+  const SkillBadge = ({ skill }: { skill: string }) => (
+    <Badge
+      variant="outline"
+      className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-sm py-1.5 px-3"
+    >
+      {skill}
+    </Badge>
+  );
+
+  const AnalysisCard = ({ title, items, color = "blue", icon: Icon }: {
+    title: string;
+    items: string[];
+    color?: "green" | "blue" | "orange" | "red";
+    icon?: any;
+  }) => {
+    const colorClasses = {
+      green: "text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200",
+      blue: "text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200",
+      orange: "text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200",
+      red: "text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200"
+    };
+
+    return (
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex items-center mb-3">
+            {Icon && <Icon className={`w-4 h-4 mr-2 ${colorClasses[color].split(' ')[0]}`} />}
+            <h4 className="font-semibold text-slate-900 dark:text-white">{title}</h4>
+            <Badge variant="outline" className="ml-2 bg-slate-100 text-slate-600">
+              {items.length}
+            </Badge>
+          </div>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {items.map((item, index) => (
+              <div key={index} className="flex items-start space-x-2 text-sm">
+                <div className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${colorClasses[color].split(' ')[0]}`} />
+                <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{item}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
-  const JobCard = ({ job, featured }: { job: any; featured?: boolean }) => (
+  const ProfileCard = ({ profile }: { profile: any }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <User className="w-5 h-5 mr-2 text-blue-500" />
+          Candidate Profile
+        </CardTitle>
+        <CardDescription>
+          AI-extracted profile from your CV
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-slate-600">Experience</label>
+            <p className="text-lg font-semibold">{profile.experience_years} years</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-600">Level</label>
+            <Badge className="bg-blue-500 text-white">{profile.seniority_level}</Badge>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-slate-600">Current Role</label>
+          <p className="font-medium">{profile.current_role}</p>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-slate-600 flex items-center">
+            <GraduationCap className="w-4 h-4 mr-1" />
+            Education
+          </label>
+          <p>{profile.education_level}</p>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-slate-600 flex items-center">
+            <Languages className="w-4 h-4 mr-1" />
+            Languages
+          </label>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {profile.languages?.map((lang: string, index: number) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {lang}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-slate-600">Location Preferences</label>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {profile.preferred_locations?.map((location: string, index: number) => (
+              <Badge key={index} variant="outline" className="text-xs bg-green-50 text-green-700">
+                {location}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-slate-600">Salary Expectations</label>
+          <p className="font-medium">
+            ${profile.salary_expectation_min?.toLocaleString()} - ${profile.salary_expectation_max?.toLocaleString()} {profile.currency}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const JobMatchCard = ({ job }: { job: any }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className={`group relative ${featured ? 'col-span-1 lg:col-span-2' : ''}`}
+      className="group"
     >
-      <Card className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 h-full ${
-        featured ? 'border-2 border-blue-300 dark:border-blue-600' : ''
-      }`}>
+      <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 h-full">
         <CardContent className="p-6">
-          {/* Header */}
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg">
-                {job.logo}
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {job.title}
-                </h3>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Building className="w-4 h-4 text-slate-500" />
-                  <span className="text-slate-600 dark:text-slate-400">{job.company}</span>
-                  {job.featured && (
-                    <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 text-xs">
-                      Featured
-                    </Badge>
-                  )}
-                </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {job.title}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <MapPin className="w-4 h-4 text-slate-500" />
+                <span className="text-slate-600 dark:text-slate-400">{job.location}</span>
+                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+                  {job.type}
+                </Badge>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              {job.urgent && (
-                <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
-                  Urgent
-                </Badge>
-              )}
-              <button
-                onClick={() => toggleSavedJob(job.id)}
-                className={`p-2 rounded-lg transition-colors ${
-                  savedJobs.includes(job.id)
-                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
-                    : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${savedJobs.includes(job.id) ? 'fill-current' : ''}`} />
-              </button>
+              <Badge className={`${job.match_score > 70 ? 'bg-green-500' : job.match_score > 50 ? 'bg-yellow-500' : 'bg-orange-500'} text-white`}>
+                {job.match_score}% Match
+              </Badge>
             </div>
           </div>
 
-          {/* Details */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
-              <MapPin className="w-4 h-4" />
-              <span>{job.location}</span>
-            </div>
             <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
               <Briefcase className="w-4 h-4" />
               <span>{job.type}</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
-              <DollarSign className="w-4 h-4" />
-              <span>{job.salary}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
               <Clock className="w-4 h-4" />
-              <span>{job.posted}</span>
+              <span>Full-time</span>
             </div>
           </div>
 
-          {/* Match Score */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Match Score</span>
-              <span className="text-sm font-bold text-green-600">{job.match}%</span>
-            </div>
-            <Progress value={job.match} className="h-2 bg-slate-200 dark:bg-slate-700" />
-          </div>
-
-          {/* Skills */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {job.skills.map((skill:any, index:any) => (
-              <Badge 
-                key={index} 
-                variant="outline" 
-                className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
-              >
-                {skill}
-              </Badge>
-            ))}
-          </div>
-
-          {/* Actions */}
           <div className="flex items-center justify-between">
             <Button variant="outline" className="rounded-xl border-2 text-sm">
-              <Eye className="w-4 h-4 mr-2" />
-              View Details
+              <Heart className="w-4 h-4 mr-2" />
+              Save
             </Button>
             <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 shadow-lg transition-all duration-300">
               Apply Now
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ExternalLink className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </CardContent>
@@ -260,313 +514,1488 @@ export default function JobMatcher() {
     </motion.div>
   );
 
+  const RecommendationCard = ({ recommendation, index }: { recommendation: any; index: number }) => (
+    <Card className="border-l-4 border-l-blue-500">
+      <CardHeader>
+        <CardTitle className="flex items-center text-lg">
+          <Rocket className="w-5 h-5 mr-2 text-blue-500" />
+          {recommendation.job_title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <h4 className="font-semibold text-slate-900 dark:text-white flex items-center mb-2">
+            <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+            Why You're a Good Fit
+          </h4>
+          <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+            {recommendation.why_good_fit}
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-slate-900 dark:text-white flex items-center mb-2">
+            <Target className="w-4 h-4 mr-2 text-blue-500" />
+            What to Emphasize
+          </h4>
+          <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+            {recommendation.what_to_emphasize}
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-slate-900 dark:text-white flex items-center mb-2">
+            <Lightbulb className="w-4 h-4 mr-2 text-yellow-500" />
+            Application Tips
+          </h4>
+          <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+            {recommendation.application_tips}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const LiveJobCard = ({ job }: { job: LiveJob }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group"
+    >
+      <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 h-full">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {job.title}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <Building className="w-4 h-4 text-slate-500" />
+                <span className="text-slate-600 dark:text-slate-400">{job.company}</span>
+                <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-xs">
+                  {job.source}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+              <MapPin className="w-4 h-4" />
+              <span>{job.location}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+              <DollarSign className="w-4 h-4" />
+              <span>{job.salary || 'Salary not specified'}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+              <Clock className="w-4 h-4" />
+              <span>{new Date(job.posted_date).toLocaleDateString()}</span>
+            </div>
+            {job.type && (
+              <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+                <Briefcase className="w-4 h-4" />
+                <span>{job.type}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Button variant="outline" className="rounded-xl border-2 text-sm">
+              <Bookmark className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+            <Button className="bg-green-500 hover:bg-green-600 text-white rounded-xl px-6 shadow-lg transition-all duration-300">
+              View Job
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Stats Overview */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {jobStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-            >
-              <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* System Status */}
+      {healthStatus && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className={`border-l-4 ${healthStatus.status === 'healthy'
+            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+            : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+            }`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${healthStatus.status === 'healthy' ? 'bg-green-500' : 'bg-yellow-500'
+                    }`} />
+                  <div>
+                    <p className="font-medium">AI Job Matcher - System Ready</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Groq API: {healthStatus.groq_api} • Database: {healthStatus.vector_db_count} records
+                    </p>
+                  </div>
+                </div>
+                <Badge variant={healthStatus.status === 'healthy' ? 'default' : 'secondary'}>
+                  v{healthStatus.version}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Left Column - Upload & Forms */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Upload Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700 rounded-2xl shadow-xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-blue-900 dark:text-blue-100 text-xl flex items-center">
+                  <Sparkles className="w-6 h-6 mr-2" />
+                  AI Job Matcher
+                </CardTitle>
+                <CardDescription className="text-blue-700 dark:text-blue-300">
+                  Upload CV for analysis, matching, and live job search
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* File Upload */}
+                <div className="p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-600">
+                  <div className="text-center">
+                    <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                      {cvForm.file ? cvForm.file.name : "Upload your CV (PDF)"}
+                    </p>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                      disabled={uploading}
+                      className="hidden"
+                      id="cv-upload"
+                    />
+                    <label
+                      htmlFor="cv-upload"
+                      className={`inline-flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors ${uploading
+                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          {cvForm.file ? 'Change File' : 'Select PDF'}
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Additional Action Buttons */}
+                {!showCVForm && !showFootprintForm && !showCareerInsights && (
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => setShowCVForm(true)}
+                      variant="outline"
+                      className="w-full border-blue-300 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
+                      CV Analysis
+                    </Button>
+
+                    <Button
+                      onClick={() => setShowFootprintForm(true)}
+                      variant="outline"
+                      className="w-full border-orange-300 text-orange-700 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      Scan Digital Footprint
+                    </Button>
+
+                    <Button
+                      onClick={() => setShowCareerInsights(true)}
+                      variant="outline"
+                      className="w-full border-purple-300 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Generate Career Insights
+                    </Button>
+                  </div>
+                )}
+
+                {/* CV Analysis Form */}
+                {showCVForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-slate-900 dark:text-white flex items-center">
+                        <FileEdit className="w-5 h-5 mr-2 text-blue-500" />
+                        CV Analysis
+                      </h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCVForm(false)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+
                     <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                        {stat.label}
-                      </p>
-                      <div className="flex items-baseline space-x-2">
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-                          {stat.value}
-                        </h3>
-                        <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 text-xs">
-                          {stat.change}
-                        </Badge>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Job Title *
+                      </label>
+                      <input
+                        type="text"
+                        value={cvForm.job_title}
+                        onChange={(e) => updateCvForm('job_title', e.target.value)}
+                        placeholder="e.g., Senior Frontend Developer"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Job Description *
+                      </label>
+                      <textarea
+                        value={cvForm.job_description}
+                        onChange={(e) => updateCvForm('job_description', e.target.value)}
+                        placeholder="Paste the job description here..."
+                        rows={3}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          Your Name
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            value={cvForm.candidate_name}
+                            onChange={(e) => updateCvForm('candidate_name', e.target.value)}
+                            placeholder="Optional"
+                            className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          Your Email
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                          <input
+                            type="email"
+                            value={cvForm.candidate_email}
+                            onChange={(e) => updateCvForm('candidate_email', e.target.value)}
+                            placeholder="optional@email.com"
+                            className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className={`p-3 rounded-xl bg-${stat.color.split('-')[1]}-100 dark:bg-${stat.color.split('-')[1]}-900/20`}>
-                      <Icon className={`w-6 h-6 ${stat.color}`} />
+
+                    <div className="flex flex-col gap-2 pt-2">
+                      <Button
+                        onClick={handleCVAnalysis}
+                        disabled={uploading || !cvForm.job_title || !cvForm.job_description}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Brain className="w-4 h-4 mr-2" />
+                            Analyze CV
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        onClick={handleExtractSkills}
+                        disabled={uploading || !cvForm.file}
+                        variant="outline"
+                        className="border-green-300 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Extract Skills
+                      </Button>
+
+                      <Button
+                        onClick={handleJobMatching}
+                        disabled={uploading || !cvForm.file}
+                        className="bg-purple-500 hover:bg-purple-600 text-white"
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Matching...
+                          </>
+                        ) : (
+                          <>
+                            <Target className="w-4 h-4 mr-2" />
+                            Match Jobs
+                          </>
+                        )}
+                      </Button>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* Footprint Scanner Form */}
+                {showFootprintForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4"
+                  >
+                    <Card className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20 border-orange-200 dark:border-orange-700">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-orange-900 dark:text-orange-100 text-lg flex items-center">
+                            <Globe className="w-5 h-5 mr-2" />
+                            Digital Footprint Scanner
+                          </CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowFootprintForm(false)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <CardDescription className="text-orange-700 dark:text-orange-300">
+                          Analyze GitHub, LinkedIn, and StackOverflow profiles
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
+                            <Github className="w-4 h-4 mr-2" />
+                            GitHub Username
+                          </label>
+                          <input
+                            type="text"
+                            value={footprintForm.github_username}
+                            onChange={(e) => updateFootprintForm('github_username', e.target.value)}
+                            placeholder="e.g., octocat"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
+                            <Linkedin className="w-4 h-4 mr-2" />
+                            LinkedIn Profile URL
+                          </label>
+                          <input
+                            type="url"
+                            value={footprintForm.linkedin_url}
+                            onChange={(e) => updateFootprintForm('linkedin_url', e.target.value)}
+                            placeholder="e.g., https://linkedin.com/in/username"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
+                            <Code2 className="w-4 h-4 mr-2" />
+                            StackOverflow User ID
+                          </label>
+                          <input
+                            type="text"
+                            value={footprintForm.stackoverflow_id}
+                            onChange={(e) => updateFootprintForm('stackoverflow_id', e.target.value)}
+                            placeholder="e.g., 1234567"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+
+                        <Button
+                          onClick={handleFootprintScan}
+                          disabled={uploading || (!footprintForm.github_username && !footprintForm.linkedin_url && !footprintForm.stackoverflow_id)}
+                          className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        >
+                          {uploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Scanning...
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-4 h-4 mr-2" />
+                              Scan Digital Footprint
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {/* Career Insights Form */}
+                {showCareerInsights && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4"
+                  >
+                    <Card className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-purple-900 dark:text-purple-100 text-lg flex items-center">
+                            <TrendingUp className="w-5 h-5 mr-2" />
+                            Career Insights Generator
+                          </CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowCareerInsights(false)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <CardDescription className="text-purple-700 dark:text-purple-300">
+                          Get AI-powered career recommendations and market insights
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-600">
+                          <div className="text-center">
+                            <FileText className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                              {cvForm.file ? cvForm.file.name : "Upload your CV (PDF)"}
+                            </p>
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={handleFileSelect}
+                              disabled={uploading}
+                              className="hidden"
+                              id="insights-upload"
+                            />
+                            <label
+                              htmlFor="insights-upload"
+                              className={`inline-flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors ${uploading
+                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                }`}
+                            >
+                              {uploading ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Processing...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  {cvForm.file ? 'Change File' : 'Select PDF'}
+                                </>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={handleCareerInsights}
+                          disabled={uploading || !cvForm.file}
+                          className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+                        >
+                          {uploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Generating Insights...
+                            </>
+                          ) : (
+                            <>
+                              <Brain className="w-4 h-4 mr-2" />
+                              Generate Career Insights
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {/* Job Matching Preferences */}
+                <div className="pt-4 border-t border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-slate-900 dark:text-white flex items-center">
+                      <Settings className="w-5 h-5 mr-2 text-purple-500" />
+                      Job Matching Preferences
+                    </h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowJobPreferences(!showJobPreferences)}
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {showJobPreferences && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="space-y-4"
+                    >
+                      {/* Salary Range */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Salary Range ($/year)
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <input
+                              type="number"
+                              value={jobMatchPreferences.salary_min}
+                              onChange={(e) => updateJobMatchPreference('salary_min', parseInt(e.target.value) || 0)}
+                              placeholder="Min"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <input
+                              type="number"
+                              value={jobMatchPreferences.salary_max}
+                              onChange={(e) => updateJobMatchPreference('salary_max', parseInt(e.target.value) || 0)}
+                              placeholder="Max"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Preferred Locations */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Preferred Locations
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {jobMatchPreferences.preferred_locations?.map((location, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 text-xs"
+                            >
+                              {location}
+                              <button
+                                onClick={() => removeLocation(location)}
+                                className="ml-1 text-green-600 hover:text-green-800"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Add location..."
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                addLocation(e.currentTarget.value);
+                                e.currentTarget.value = '';
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const input = document.querySelector('input[placeholder="Add location..."]') as HTMLInputElement;
+                              if (input) {
+                                addLocation(input.value);
+                                input.value = '';
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Remote Work Preference */}
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Open to Remote Work
+                        </label>
+                        <button
+                          onClick={() => updateJobMatchPreference('open_to_remote', !jobMatchPreferences.open_to_remote)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${jobMatchPreferences.open_to_remote ? 'bg-green-500' : 'bg-slate-300'}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${jobMatchPreferences.open_to_remote ? 'translate-x-6' : 'translate-x-1'}`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Max Results */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Max Results: {jobMatchPreferences.max_results}
+                        </label>
+                        <input
+                          type="range"
+                          min="5"
+                          max="50"
+                          value={jobMatchPreferences.max_results}
+                          onChange={(e) => updateJobMatchPreference('max_results', parseInt(e.target.value))}
+                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs text-slate-500">
+                          <span>5</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Live Search Form */}
+                <div className="pt-4 border-t border-blue-200">
+                  <h4 className="font-semibold text-slate-900 dark:text-white flex items-center mb-3">
+                    <Globe className="w-5 h-5 mr-2 text-green-500" />
+                    Live Job Search
+                  </h4>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Keywords *
+                      </label>
+                      <input
+                        type="text"
+                        value={liveSearch.keywords}
+                        onChange={(e) => updateLiveSearch('keywords', e.target.value)}
+                        placeholder="e.g., React Developer, Data Scientist"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        value={liveSearch.location}
+                        onChange={(e) => updateLiveSearch('location', e.target.value)}
+                        placeholder="e.g., Dubai, Remote"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleLiveSearch}
+                      disabled={uploading || !liveSearch.keywords.trim()}
+                      className="bg-green-500 hover:bg-green-600 text-white w-full"
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4 mr-2" />
+                          Search Live Jobs
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Quick Stats */}
+          {(cvAnalysis || extractedSkills.length > 0 || jobMatches || liveJobs.length > 0 || footprintData || careerInsights) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Results Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {cvAnalysis && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">CV Match Score</span>
+                      <Badge className="bg-green-500 text-white">
+                        {cvAnalysis.overall_match_score}%
+                      </Badge>
+                    </div>
+                  )}
+
+                  {extractedSkills.length > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Skills Found</span>
+                      <Badge variant="outline">{extractedSkills.length}</Badge>
+                    </div>
+                  )}
+
+                  {jobMatches && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Job Matches</span>
+                      <Badge variant="outline">{jobMatches.total_matches}</Badge>
+                    </div>
+                  )}
+
+                  {liveJobs.length > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Live Jobs</span>
+                      <Badge variant="outline">{liveJobs.length}</Badge>
+                    </div>
+                  )}
+
+                  {footprintData && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Footprint Score</span>
+                      <Badge className="bg-orange-500 text-white">
+                        {footprintData.overall_footprint_score}%
+                      </Badge>
+                    </div>
+                  )}
+
+                  {careerInsights && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Career Insights</span>
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                        Generated
+                      </Badge>
+                    </div>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={clearAnalysis}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear All
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right Column - Results */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Results Header */}
+          {(cvAnalysis || extractedSkills.length > 0 || jobMatches || liveJobs.length > 0 || footprintData || careerInsights) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex space-x-4 border-b overflow-x-auto">
+                    {cvAnalysis && (
+                      <button
+                        onClick={() => setActiveTab('analysis')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'analysis'
+                          ? 'text-blue-600 border-b-2 border-blue-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <Target className="w-4 h-4 inline mr-2" />
+                        CV Analysis
+                      </button>
+                    )}
+                    {extractedSkills.length > 0 && (
+                      <button
+                        onClick={() => setActiveTab('skills')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'skills'
+                          ? 'text-blue-600 border-b-2 border-blue-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <Lightbulb className="w-4 h-4 inline mr-2" />
+                        Skills ({extractedSkills.length})
+                      </button>
+                    )}
+                    {jobMatches && (
+                      <button
+                        onClick={() => setActiveTab('matches')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'matches'
+                          ? 'text-blue-600 border-b-2 border-blue-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <Briefcase className="w-4 h-4 inline mr-2" />
+                        Matches ({jobMatches.total_matches})
+                      </button>
+                    )}
+                    {liveJobs.length > 0 && (
+                      <button
+                        onClick={() => setActiveTab('live')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'live'
+                          ? 'text-blue-600 border-b-2 border-blue-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <Globe className="w-4 h-4 inline mr-2" />
+                        Live Jobs ({liveJobs.length})
+                      </button>
+                    )}
+                    {footprintData && (
+                      <button
+                        onClick={() => setActiveTab('footprint')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'footprint'
+                          ? 'text-orange-600 border-b-2 border-orange-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <Globe className="w-4 h-4 inline mr-2" />
+                        Footprint
+                      </button>
+                    )}
+                    {careerInsights && (
+                      <button
+                        onClick={() => setActiveTab('insights')}
+                        className={`pb-2 px-1 font-medium transition-colors whitespace-nowrap ${activeTab === 'insights'
+                          ? 'text-purple-600 border-b-2 border-purple-600'
+                          : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        <TrendingUp className="w-4 h-4 inline mr-2" />
+                        Insights
+                      </button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
-          );
-        })}
-      </motion.div>
+          )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-3 space-y-8">
-          {/* Search & Filter Card */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700 rounded-2xl shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-blue-900 dark:text-blue-100 text-2xl flex items-center">
-                      <Search className="w-7 h-7 mr-3" />
-                      {t('dashboard.findJobs')}
-                    </CardTitle>
-                    <CardDescription className="text-blue-700 dark:text-blue-300 text-lg mt-2">
-                      {t('dashboard.findJobsDesc')}
-                    </CardDescription>
+          {/* Analysis Results */}
+          {activeTab === 'analysis' && cvAnalysis && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Overall Score Card */}
+              <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        CV Analysis Complete
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400">
+                        {cvAnalysis.overall_feedback}
+                      </p>
+                    </div>
+                    <Badge className={`text-white ${cvAnalysis.recommendation === 'POTENTIAL FIT'
+                      ? 'bg-green-500'
+                      : cvAnalysis.recommendation === 'STRONG MATCH'
+                        ? 'bg-blue-500'
+                        : 'bg-orange-500'
+                      }`}>
+                      {cvAnalysis.recommendation}
+                    </Badge>
                   </div>
-                  <Badge className="bg-blue-500 text-white border-0 text-sm py-1">
-                    AI Powered
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Search Bar */}
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search for jobs, companies, or skills..."
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
 
-                {/* Quick Filters */}
-                <div className="flex flex-wrap gap-3 mb-6">
-                  {filters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setActiveFilter(filter.id)}
-                      className={`px-4 py-2 rounded-xl border-2 transition-all duration-200 ${
-                        activeFilter === filter.id
-                          ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                          : 'bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600'
-                      }`}
-                    >
-                      <span className="font-medium">{filter.label}</span>
-                      <Badge 
-                        variant="outline" 
-                        className={`ml-2 ${
-                          activeFilter === filter.id
-                            ? 'bg-white/20 text-white border-white/30'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {filter.count}
-                      </Badge>
-                    </button>
-                  ))}
-                </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{cvAnalysis.overall_match_score}%</div>
+                      <div className="text-sm text-slate-600">Overall Match</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{cvAnalysis.ats_score}%</div>
+                      <div className="text-sm text-slate-600">ATS Score</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Action Buttons */}
-                <div className={`flex flex-col sm:flex-row ${isRTL ? 'space-x-reverse' : ''} space-y-4 sm:space-y-0 sm:space-x-4`}>
-                  <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-8 py-3 shadow-lg transition-all duration-300 hover:shadow-xl flex-1 group">
-                    <Search className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                    {t('dashboard.browseJobs')}
-                  </Button>
-                  <Button variant="outline" className="rounded-xl px-6 py-3 border-2 border-blue-300 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-1">
-                    <Filter className="w-4 h-4 mr-2" />
-                    {t('dashboard.setPreferences')}
-                  </Button>
-                  <Button variant="outline" className="rounded-xl px-6 py-3 border-2 border-green-300 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Smart Apply
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+              {/* Skills Match Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnalysisCard
+                  title="Matched Skills"
+                  items={cvAnalysis.matched_skills}
+                  color="green"
+                  icon={CheckCircle2}
+                />
+                <AnalysisCard
+                  title="Missing Skills"
+                  items={cvAnalysis.missing_skills}
+                  color="orange"
+                  icon={AlertCircle}
+                />
+              </div>
 
-          {/* Featured Jobs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-slate-900 dark:text-white flex items-center">
-                    <Star className="w-5 h-5 mr-2 text-yellow-500 fill-current" />
-                    Featured Jobs
+              {/* Strengths & Suggestions Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnalysisCard
+                  title="Strengths"
+                  items={cvAnalysis.strengths}
+                  color="blue"
+                  icon={Star}
+                />
+                <AnalysisCard
+                  title="Improvement Suggestions"
+                  items={cvAnalysis.suggestions}
+                  color="orange"
+                  icon={Lightbulb}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Skills Results */}
+          {activeTab === 'skills' && extractedSkills.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Lightbulb className="w-5 h-5 mr-2 text-yellow-500" />
+                    Extracted Skills
+                    <Badge variant="outline" className="ml-2">
+                      {extractedSkills.length} skills found
+                    </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Curated opportunities matching your profile perfectly
+                    AI-powered skill extraction from your CV
                   </CardDescription>
-                </div>
-                <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
-                  {featuredJobs.length} positions
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {featuredJobs.map((job, index) => (
-                    <JobCard key={job.id} job={job} featured={true} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {extractedSkills.map((skill, index) => (
+                      <SkillBadge key={index} skill={skill} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
-          {/* Recommended Jobs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
+          {/* Job Matches Results */}
+          {activeTab === 'matches' && jobMatches && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-slate-900 dark:text-white flex items-center">
-                    <Target className="w-5 h-5 mr-2 text-green-500" />
-                    Recommended For You
-                  </CardTitle>
-                  <CardDescription>
-                    Jobs that match your skills and preferences
-                  </CardDescription>
-                </div>
-                <Button variant="outline" className="rounded-xl">
-                  View All
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-6">
-                  {recommendedJobs.map((job, index) => (
-                    <JobCard key={job.id} job={job} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-8">
-          {/* Quick Searches */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-white text-lg flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2 text-orange-500" />
-                  Trending Searches
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {quickSearches.map((search, index) => (
-                  <motion.button
-                    key={search.term}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200 group"
-                  >
-                    <div className="text-left">
-                      <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                        {search.term}
-                      </span>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <Eye className="w-3 h-3 text-slate-500" />
-                        <span className="text-xs text-slate-500 dark:text-slate-500">{search.count} jobs</span>
-                      </div>
-                    </div>
-                    {search.trending && (
-                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 text-xs">
-                        Trending
-                      </Badge>
-                    )}
-                  </motion.button>
-                ))}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Application Progress */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700 rounded-2xl shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-slate-900 dark:text-white">
-                  <CheckCircle2 className="w-5 h-5 mr-2 text-green-500" />
-                  Application Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { step: 'Applied', count: 24, color: 'bg-blue-500' },
-                    { step: 'Viewed', count: 18, color: 'bg-purple-500' },
-                    { step: 'Interview', count: 5, color: 'bg-orange-500' },
-                    { step: 'Offer', count: 2, color: 'bg-green-500' }
-                  ].map((status, index) => (
-                    <div key={status.step} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${status.color}`} />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {status.step}
-                        </span>
-                      </div>
-                      <span className="text-sm font-bold text-slate-900 dark:text-white">
-                        {status.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full mt-4 rounded-xl border-2">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share Progress
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Saved Jobs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-white text-lg flex items-center">
-                  <Bookmark className="w-5 h-5 mr-2 text-red-500 fill-current" />
-                  Saved Jobs
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center p-4">
-                  <Heart className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400 mb-4">
-                    {savedJobs.length > 0 
-                      ? `You have ${savedJobs.length} saved jobs` 
-                      : 'No jobs saved yet'
-                    }
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    AI-Matched Jobs
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {jobMatches.total_matches} jobs matched to your preferences
                   </p>
-                  <Button variant="outline" className="rounded-xl w-full">
-                    View Saved Jobs
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <Badge variant="outline" className="bg-blue-50 text-blue-600">
+                  AI Powered Matching
+                </Badge>
+              </div>
+
+              {/* Profile Section */}
+              {jobMatches.profile && (
+                <ProfileCard profile={jobMatches.profile} />
+              )}
+
+              {/* Overall Assessment */}
+              {jobMatches.recommendations?.overall_assessment && (
+                <Card className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <BarChart3 className="w-5 h-5 mr-2 text-green-500" />
+                      Overall Assessment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {jobMatches.recommendations.overall_assessment}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Job Matches */}
+              {jobMatches.matches && jobMatches.matches.length > 0 && (
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
+                    <Briefcase className="w-5 h-5 mr-2 text-blue-500" />
+                    Recommended Jobs ({jobMatches.matches.length})
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {jobMatches.matches.map((job: any, index: any) => (
+                      <JobMatchCard key={job.job_id} job={job} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Detailed Recommendations */}
+              {jobMatches.recommendations?.job_recommendations && (
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
+                    <Rocket className="w-5 h-5 mr-2 text-purple-500" />
+                    Detailed Recommendations
+                  </h3>
+                  <div className="space-y-6">
+                    {jobMatches.recommendations.job_recommendations.map((recommendation: any, index: any) => (
+                      <RecommendationCard key={index} recommendation={recommendation} index={index} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Market Insights */}
+              {jobMatches.recommendations?.market_insights && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-orange-500" />
+                      Market Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {jobMatches.recommendations.market_insights}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Next Steps */}
+              {jobMatches.recommendations?.next_steps && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <CheckCircle2 className="w-5 h-5 mr-2 text-green-500" />
+                      Next Steps
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {jobMatches.recommendations.next_steps.map((step: any, index: any) => (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-blue-600 dark:text-blue-400 text-sm font-bold">{index + 1}</span>
+                          </div>
+                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{step}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          )}
+
+          {/* Live Jobs Results */}
+          {activeTab === 'live' && liveJobs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Live Job Search Results
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {liveJobs.length} jobs found from {Array.from(new Set(liveJobs.map(job => job.source))).join(', ')}
+                  </p>
+                </div>
+                <Badge variant="outline" className="bg-green-50 text-green-600">
+                  Real-time Search
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {liveJobs.map((job, index) => (
+                  <LiveJobCard key={job.id} job={job} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Footprint Scanner Results */}
+          {activeTab === 'footprint' && footprintData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Overall Score */}
+              <Card className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        Digital Footprint Analysis
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400">
+                        Overall digital presence score
+                      </p>
+                    </div>
+                    <Badge className="bg-orange-500 text-white text-lg">
+                      {footprintData.overall_footprint_score}/100
+                    </Badge>
+                  </div>
+                  <Progress value={footprintData.overall_footprint_score} className="h-2" />
+                </CardContent>
+              </Card>
+
+              {/* GitHub Results */}
+              {footprintData.results.github && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Github className="w-5 h-5 mr-2" />
+                      GitHub Profile
+                      {!footprintData.results.github.error && (
+                        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
+                          {footprintData.results.github.activity_score} Activity Score
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {footprintData.results.github.error ? (
+                      <div className="text-red-500 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        {footprintData.results.github.error}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.github.public_repos}</div>
+                          <div className="text-sm text-slate-600">Repos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.github.followers}</div>
+                          <div className="text-sm text-slate-600">Followers</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.github.total_stars}</div>
+                          <div className="text-sm text-slate-600">Stars</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.github.following}</div>
+                          <div className="text-sm text-slate-600">Following</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {footprintData.results.github.top_languages && footprintData.results.github.top_languages.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="font-semibold mb-2">Top Languages</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {footprintData.results.github.top_languages.map((lang, index) => (
+                            <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700">
+                              {lang}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* StackOverflow Results */}
+              {footprintData.results.stackoverflow && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Code2 className="w-5 h-5 mr-2" />
+                      StackOverflow Profile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {footprintData.results.stackoverflow.error ? (
+                      <div className="text-red-500 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        {footprintData.results.stackoverflow.error}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.stackoverflow.reputation}</div>
+                          <div className="text-sm text-slate-600">Reputation</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.stackoverflow.gold_badges}</div>
+                          <div className="text-sm text-slate-600">Gold</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.stackoverflow.silver_badges}</div>
+                          <div className="text-sm text-slate-600">Silver</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-900">{footprintData.results.stackoverflow.bronze_badges}</div>
+                          <div className="text-sm text-slate-600">Bronze</div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* LinkedIn Results */}
+              {footprintData.results.linkedin && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Linkedin className="w-5 h-5 mr-2" />
+                      LinkedIn Profile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600 mb-4">{footprintData.results.linkedin.note}</p>
+                    <Button variant="outline" asChild>
+                      <a href={footprintData.results.linkedin.profile_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View Profile
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          )}
+
+          {/* Career Insights Results */}
+          {activeTab === 'insights' && careerInsights && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Career Summary */}
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Career Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {careerInsights.insights.career_summary}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Market Competitiveness */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Market Competitiveness
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Badge className={
+                      careerInsights.insights.market_competitiveness === 'High' ? 'bg-green-500' :
+                      careerInsights.insights.market_competitiveness === 'Medium' ? 'bg-yellow-500' : 'bg-orange-500'
+                    }>
+                      {careerInsights.insights.market_competitiveness}
+                    </Badge>
+                    <span className="text-slate-600 text-sm">
+                      Based on your skills and experience
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Salary Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2" />
+                    Salary Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-2xl font-bold text-slate-900">
+                    {careerInsights.insights.salary_insights.range}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Key Factors:</h4>
+                    <ul className="space-y-1">
+                      {careerInsights.insights.salary_insights.factors.map((factor, index) => (
+                        <li key={index} className="flex items-center text-sm text-slate-600">
+                          <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                          {factor}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Growth Opportunities */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Rocket className="w-5 h-5 mr-2" />
+                    Growth Opportunities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {careerInsights.insights.growth_opportunities.map((opportunity, index) => (
+                      <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+                        <h4 className="font-semibold text-slate-900">{opportunity.role}</h4>
+                        <p className="text-sm text-slate-600">Timeline: {opportunity.timeline}</p>
+                        {opportunity.requirements && (
+                          <div className="mt-2">
+                            <p className="text-sm font-medium text-slate-700">Requirements:</p>
+                            <ul className="text-sm text-slate-600 mt-1 space-y-1">
+                              {opportunity.requirements.map((req, reqIndex) => (
+                                <li key={reqIndex} className="flex items-center">
+                                  <div className="w-1 h-1 bg-slate-400 rounded-full mr-2"></div>
+                                  {req}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recommended Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Recommended Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {careerInsights.insights.recommended_actions.map((action, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <span className="font-medium">{action.action}</span>
+                        <Badge className={
+                          action.priority === 'High' ? 'bg-red-500' :
+                          action.priority === 'Medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                        }>
+                          {action.priority}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Industry Trends */}
+              {careerInsights.insights.industry_trends && careerInsights.insights.industry_trends.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2" />
+                      Industry Trends
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {careerInsights.insights.industry_trends.map((trend, index) => (
+                        <li key={index} className="flex items-start text-sm text-slate-600">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                          {trend}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Skill Gaps */}
+              {careerInsights.insights.skill_gaps && careerInsights.insights.skill_gaps.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Lightbulb className="w-5 h-5 mr-2" />
+                      Skill Gaps to Address
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {careerInsights.insights.skill_gaps.map((gap, index) => (
+                        <Badge key={index} variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          {gap}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          )}
+
+          {/* Empty State */}
+          {!cvAnalysis && extractedSkills.length === 0 && !jobMatches && liveJobs.length === 0 && !footprintData && !careerInsights && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-12"
+            >
+              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                Start Your Job Search Journey
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                Upload your CV to get AI-powered analysis, skill extraction, job matching, and live job search from multiple sources.
+              </p>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

@@ -64,7 +64,7 @@ export default function JobSeekerDashboard() {
   const handleLogout = async () => {
     LogoutUser();
     await logout();
-    navigate('/auth/login');
+    navigate('/login');
   };
 
   const fetchUser = async () => {

@@ -18,6 +18,9 @@ import JobMatcher from './pages/JobSeeker/JobMatcher';
 import InterviewAI from './pages/JobSeeker/InterviewAI';
 import Profile from './pages/JobSeeker/Profile';
 import EmailVerification from './pages/Auth/EmailVerification';
+import PublicRoute from './guard/publicRoutes';
+import ProtectedRoute from './guard/protectedRoutes';
+import UnauthorizedPage from './pages/Auth/UnauthorizedPage';
 
 type AppView = 'splash' | 'onboarding' | 'main';
 
@@ -44,7 +47,7 @@ function AppContent() {
       (location.search.includes('success=true') || location.search.includes('success=false'));
   };
 
- const isForgetPassword = () => location.search.includes('token');
+  const isForgetPassword = () => location.search.includes('token');
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -163,19 +166,30 @@ function AppContent() {
       {appState.currentView === 'main' && (
         <LanguageProvider>
           <Routes>
-            <Route path="/" element={<ConnexionPage />} />
-            <Route path="/login" element={<ConnexionPage />} />
-            <Route path="/register" element={<ConnexionPage />} />
+            <Route element={<PublicRoute />}>
+              <Route path="/" element={<ConnexionPage />} />
+              <Route path="/login" element={<ConnexionPage />} />
+              <Route path="/register" element={<ConnexionPage />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={["jobseeker"]} />}>
+              <Route path="/dashboard" element={<JobSeekerDashboard />}>
+                <Route index element={<Navigate to="/dashboard/enhance-cv" replace />} />
+                <Route path="enhance-cv" element={<EnhanceCV />} />
+                <Route path="job-matcher" element={<JobMatcher />} />
+                <Route path="interview" element={<InterviewAI />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+            </Route>
+            {/* <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={["recruiter"]} />}>
+              <Route path="/recruiter" element={<RecruiterDashboard />} />
+            </Route> */}
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<PrivacyPolicy />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/auth/verify-email" element={<EmailVerification />} />
-            <Route path="/dashboard" element={<JobSeekerDashboard />}>
-              <Route index element={<Navigate to="/dashboard/enhance-cv" replace />} />
-              <Route path="enhance-cv" element={<EnhanceCV />} />
-              <Route path="job-matcher" element={<JobMatcher />} />
-              <Route path="interview" element={<InterviewAI />} />
-              <Route path="profile" element={<Profile />} />
-            </Route>
             <Route
               path="/onboarding"
               element={

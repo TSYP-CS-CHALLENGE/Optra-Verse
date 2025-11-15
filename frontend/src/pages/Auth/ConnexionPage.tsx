@@ -229,7 +229,19 @@ export default function ConnexionPage() {
                 };
                 const response = await login(credentials);
                 LoginUser(response.user);
-                navigate('/dashboard');
+                switch (response.user.role) {
+                    case "jobseeker":
+                        navigate("/dashboard");
+                        break;
+                    case "admin":
+                        navigate("/admin");
+                        break;
+                    case "recruiter":
+                        navigate("/recruiter");
+                        break;
+                    default:
+                        navigate("/");
+                }
             } catch (error: any) {
                 console.error('Login error:', error);
                 if (error.response) {
