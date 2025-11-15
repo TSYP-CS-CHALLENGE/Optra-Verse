@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown, PlayCircle, ArrowLeft } from "lucide-react";
-import logo from "@/assets/images/logo.jpg";
+import logo from "@/assets/images/logo_trasnparent.png";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { LanguageContext, useTranslation } from '@/i18n';
@@ -401,7 +401,7 @@ export default function ConnexionPage() {
                                 <img
                                     src={logo}
                                     alt="OptraVerse Logo"
-                                    className="logo-img w-20 h-20 object-contain"
+                                    className="logo-img w-30 h-30 object-contain"
                                 />
                             </div>
                         </div>

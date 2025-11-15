@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useTranslation } from '@/i18n';
+import logo from '@/assets/images/logo_trasnparent.png';
 import { 
   Search, 
   FileText, 
@@ -91,8 +92,8 @@ export default function Footer() {
               className="flex items-center space-x-3 cursor-pointer"
               onClick={() => handleNavigation('/')}
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Search className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                <img src={logo} alt="OptraVerse Logo" className="w-10 h-10 object-contain" />
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">
                 OptraVerse

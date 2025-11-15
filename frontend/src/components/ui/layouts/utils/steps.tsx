@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, useSpring, animate } from "framer-motion";
 import { useTranslation } from "@/i18n";
+import logo from "@/assets/images/logo_trasnparent.png";
 
 const onboardingSteps = [
   {
@@ -313,7 +314,7 @@ export default function OnboardingFlow({
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.6 }}
             >
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <img src={logo} alt="OptraVerse Logo" className="w-6 h-6 sm:w-10 sm:h-10 object-contain logo-img" />
             </motion.div>
             <Sparkles className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
           </div>
