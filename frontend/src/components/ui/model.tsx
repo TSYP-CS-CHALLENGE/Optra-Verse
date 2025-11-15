@@ -126,10 +126,14 @@ type GLTFResult = GLTF & {
 
 export default function Model({config,
   onFirstResponse,  
+  endCall,                    
+  onEndCallComplete,          
   ...props
 }: {
   config?: any
   onFirstResponse?: () => void  
+  endCall?: boolean           
+  onEndCallComplete?: () => void
 } & JSX.IntrinsicElements['group']) {
 
 
@@ -142,6 +146,9 @@ const { actions , mixer } = useAnimations(
   [talkingAnimation[0]], group
 );
 const [isLoading, setIsLoading] = useState(true)
+const [micEnabled, setMicEnabled] = useState(true);
+
+
 useEffect(() => {
     console.log(animation)
     console.log(actions[animation]) 
@@ -153,77 +160,13 @@ useEffect(() => {
     }
   }, [animation]) ; 
 
- const {playAudio,script} = useControls( {
-  playAudio: false,
-  script: {
-    value: "welcome",
-    options: ['welcome']
-  }}) 
-
- useControls("FacialExpressions", { 
-    winkLeft: button(() => {
-      setWinkLeft(true);
-      setTimeout(() => setWinkLeft(false), 300);
-    }),
-    winkRight: button(() => {
-      setWinkRight(true);
-      setTimeout(() => setWinkRight(false), 300);
-    }),
-    animation: {
-      value: animation,
-      options: animation,
-    },
-    facialExpression: {
-      options: Object.keys(facialExpressions),
-      onChange: (value) => setFacialExpression(value),
-    },
-    enableSetupMode: button(() => {
-      setupMode = true;
-    }),
-    disableSetupMode: button(() => {
-      setupMode = false;
-    }),
-    logMorphTargetValues: button(() => {
-      const emotionValues = {};
-      Object.keys(nodes.EyeLeft.morphTargetDictionary).forEach((key) => {
-        if (key === "eyeBlinkLeft" || key === "eyeBlinkRight") {
-          return; // eyes wink/blink are handled separately
-        }
-        const value =
-          nodes.EyeLeft.morphTargetInfluences[
-            nodes.EyeLeft.morphTargetDictionary[key]
-          ];
-        if (value > 0.01) {
-          emotionValues[key] = value;
-        }
-      });
-      console.log(JSON.stringify(emotionValues, null, 2));
-    }),
-    startListening: button(() => startMicrophone()),
-    stopListening: button(() => stopMicrophone()),
-  });
-const [, set] = useControls("MorphTarget", () =>
-Object.assign(
-  {},
-  ...Object.keys(nodes.EyeLeft.morphTargetDictionary).map((key) => {
-    return {
-      [key]: {
-        label: key,
-        value: 0,
-        min: nodes.EyeLeft.morphTargetInfluences[
-          nodes.EyeLeft.morphTargetDictionary[key]
-        ],
-        max: 1,
-        onChange: (val) => {
-          if (setupMode) {
-            lerpMorphTarget(key, val, 1);
-          }
-        },
-      },
-    };
-  })
-)
-);
+useEffect(() => {
+  if (endCall && wsRef.current?.readyState === WebSocket.OPEN) {
+    console.log("Model: End call triggered");
+    wsRef.current.send(JSON.stringify({ action: "end_session" }));
+    onEndCallComplete?.();  // Reset state
+  }
+}, [endCall, onEndCallComplete]);
 
   
 const [blink, setBlink] = useState(false);
@@ -253,63 +196,9 @@ const audioContextRef = useRef<AudioContext | null>(null)
 const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
 const processorRef = useRef<ScriptProcessorNode | null>(null)
 const streamRef = useRef<MediaStream | null>(null)
-/* 
-const AI_SIMULATION_MODEL = process.env.NEXT_PUBLIC_AI_SIMULATION_MODEL ;
-console.log("AI_SIMULATION_MODEL:", AI_SIMULATION_MODEL);
-const fetchMessage = async () => {
-  try {
-    const response = await fetch(AI_SIMULATION_MODEL, {
-      method: "POST", 
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message_id: "api_2",
-        text: "hello this is a test what language do you speak",
-      }),
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    setMessage(data);  // data should contain: text, audio, animation, facialExpression, lipsync
-    console.log("Message fetched:", data);
-  } catch (error) {
-    console.error("Failed to fetch message:", error);
-  }
-}; 
- */
-/* const audio = useMemo(() => new Audio('/Audios/welcome.mp3'), [script]); 
-const jsonFile = useLoader(THREE.FileLoader, '/Audios/welcome.json') ;
-const lipsync = JSON.parse(jsonFile) ;  */
 
 useFrame(() => { 
-  /* const currentAudioTime = audio.currentTime;
-  Object.values(corresponding).forEach((value) => {
-    nodes.Wolf3D_Head.morphTargetInfluences[
-    nodes.Wolf3D_Head.morphTargetDictionary[value]
-  ] = 0 ;
-  nodes.Wolf3D_Teeth.morphTargetInfluences[
-    nodes.Wolf3D_Teeth.morphTargetDictionary[value]
-  ] = 0 ;
-
-  })
-
-  for (let i = 0; i < lipsync.mouthCues.length; i++) {
-    const mouthCue = lipsync.mouthCues[i];
-    if (currentAudioTime>=mouthCue.start &&currentAudioTime<=mouthCue.end){
-      console.log('Mouth Cue:', mouthCue.value, 'at time:', currentAudioTime);
-      nodes.Wolf3D_Head.morphTargetInfluences[
-      nodes.Wolf3D_Head.morphTargetDictionary[corresponding[mouthCue.value]]
-      ] = 1 ;
-      nodes.Wolf3D_Teeth.morphTargetInfluences[
-      nodes.Wolf3D_Teeth.morphTargetDictionary[corresponding[mouthCue.value]]
-      ] = 1 ;
-      break; // Exit loop after finding the first matching cue
-    }
-  } */
   !setupMode &&
       Object.keys(nodes.EyeLeft.morphTargetDictionary).forEach((key) => {
         const mapping = facialExpressions[facialExpression];
@@ -360,7 +249,6 @@ const lerpMorphTarget = (
   speed: number = 0.1
 ) => {
   scene.traverse((child) => {
-    // Check and type guard for SkinnedMesh
     if (
       (child as THREE.SkinnedMesh).isSkinnedMesh &&
       (child as THREE.SkinnedMesh).morphTargetDictionary
@@ -380,44 +268,10 @@ const lerpMorphTarget = (
         value,
         speed
       );
-
-      /* if (!setupMode) {
-        try {
-          set({
-            [target]: value,
-          });
-        } catch (e) {
-          // silence
-        }
-      } */
     }
   });
 };
 
-
-/*  useEffect(() => {
-  console.log(nodes.Wolf3D_Teeth.morphTargetDictionary) ; 
-  nodes.Wolf3D_Head.morphTargetInfluences[
-    nodes.Wolf3D_Head.morphTargetDictionary["viseme_aa"]
-  ] = 0 ;
-  nodes.Wolf3D_Teeth.morphTargetInfluences[
-    nodes.Wolf3D_Teeth.morphTargetDictionary["viseme_aa"]
-  ] = 0 }, []);  */
-
-/* useEffect(() => {
-  console.log(nodes.Wolf3D_Teeth.morphTargetDictionary) ;
-  console.log(nodes.EyeLeft.morphTargetDictionary) ;
-  console.log(nodes.EyeRight.morphTargetDictionary) ;
-  console.log(nodes.Wolf3D_Head.morphTargetDictionary) ;
-  if (playAudio) {
-    audio.play().catch((error) => console.error('Error playing audio:', error));
-    } else {
-      audio.pause();
-      audio.currentTime = 0; // Reset audio to the beginning
-    }
-  }, [playAudio, script]);
- */
-  
 
 useEffect(() => {
   console.log('Blinking started'); ;
@@ -435,33 +289,31 @@ useEffect(() => {
     return () => clearTimeout(blinkTimeout);
   }, []);
 
-useEffect(()=>{
-  //fetchMessage();
-  console.log(message); 
-},[])
 useEffect(() => {
     console.log(message);
     if (!message) {
       setAnimation("Idle");
       return;
     }
+    console.log("AI response received → stopping mic");
+    setMicEnabled(false);
+    stopMicrophone();
     //setAnimation(message.animation);
     setFacialExpression(message.facialExpression);
     setLipsync(message.lipsync);
     const audio = new Audio("data:audio/mp3;base64," + message.audio);
     audio.play();
     setAudio(audio);
+    
+    audio.onended = () => {
+    console.log("AI audio finished → re-enabling mic");
+    setMicEnabled(true);
+    startMicrophone();
+    setAnimation("Idle");
+  };
     //audio.onended = onMessagePlayed;
   }, [message]);
 
-
-
-
-
-
-/*Microphone handling*/
-
-  // WebSocket and Microphone Setup
 useEffect(() => {
   const ws = new WebSocket('ws://localhost:8000/transcribe')
   wsRef.current = ws
@@ -482,6 +334,15 @@ useEffect(() => {
         onFirstResponse?.()         
         return
       }
+      if (data.status === "session_ended") {
+      console.log("FULL INTERVIEW TRANSCRIPT:");
+      console.log(data) ; 
+      console.log(data.transcript);
+      console.log("History:", data.history);
+      stopMicrophone();
+      wsRef.current?.close();
+      return;
+    }
       setMessage(data?.response);
       console.log(data);
     } catch (error) {
@@ -529,18 +390,13 @@ const startMicrophone = async () => {
 }
 
 const stopMicrophone = () => {
-  if (processorRef.current) processorRef.current.disconnect()
-  if (sourceRef.current) sourceRef.current.disconnect()
-  if (audioContextRef.current) audioContextRef.current.close()
-  if (streamRef.current) {
-    streamRef.current.getTracks().forEach(track => track.stop())
-  }
-  streamRef.current = null
-  audioContextRef.current = null
-  sourceRef.current = null
-  processorRef.current = null
-  setIsListening(false)
-}
+  if (processorRef.current) processorRef.current.disconnect();
+  if (sourceRef.current) sourceRef.current.disconnect();
+  if (audioContextRef.current) audioContextRef.current.close();
+  if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+  streamRef.current = null;
+  setIsListening(false);
+};
 
 return (
 <group {...props} dispose={null} ref={group}> 
