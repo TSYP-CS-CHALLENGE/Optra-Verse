@@ -7,11 +7,17 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\UserRole;
+use Carbon\Carbon;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -292,7 +298,7 @@ class AuthController extends Controller
     }
 
 
-     public function verify(Request $request)
+    public function verify(Request $request)
     {
         $user = User::find($request->route('id'));
 
@@ -338,5 +344,151 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Verification link sent'
         ], 200);
+    }
+
+    public function forgot(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Aucun utilisateur trouvé avec cette adresse email.'
+            ], 404);
+        }
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email'),
+                function ($user, $token) {
+                    $user->sendPasswordResetNotification($token);
+                }
+            );
+            return $status === Password::RESET_LINK_SENT
+                ? response()->json([
+                    'message' => 'Un lien de réinitialisation a été envoyé à votre adresse email.'
+                ])
+                : response()->json([
+                    'message' => 'Impossible d\'envoyer le lien de réinitialisation. Veuillez réessayer.'
+                ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de l\'envoi de l\'email.'
+            ], 500);
+        }
+    }
+
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        try {
+            $status = Password::broker()->reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function ($user, $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password),
+                        'remember_token' => Str::random(60),
+                    ])->save();
+
+                    event(new PasswordReset($user));
+                    $this->deletePasswordResetToken($user->email);
+                }
+            );
+
+            switch ($status) {
+                case Password::PASSWORD_RESET:
+                    return response()->json([
+                        'message' => 'Votre mot de passe a été réinitialisé avec succès.'
+                    ], 200);
+
+                case Password::INVALID_TOKEN:
+                    return response()->json([
+                        'message' => 'Le lien de réinitialisation est invalide ou a expiré.'
+                    ], 400);
+
+                case Password::INVALID_USER:
+                    return response()->json([
+                        'message' => 'Aucun utilisateur trouvé avec cette adresse email.'
+                    ], 400);
+
+                default:
+                    return response()->json([
+                        'message' => 'Impossible de réinitialiser le mot de passe.'
+                    ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de la réinitialisation.'
+            ], 500);
+        }
+    }
+
+    protected function deletePasswordResetToken($email)
+    {
+        DB::table('password_reset_tokens')
+            ->where('email', $email)
+            ->delete();
+    }
+
+    public function verifyToken(Request $request)
+    {
+        $request->validate(['token' => 'required']);
+
+        try {
+            $tokens = DB::table('password_reset_tokens')
+                ->where('created_at', '>', Carbon::now()->subHours(24))
+                ->get();
+
+            $validToken = null;
+            foreach ($tokens as $tokenRecord) {
+                if (Hash::check($request->token, $tokenRecord->token)) {
+                    $validToken = $tokenRecord;
+                    break;
+                }
+            }
+
+            if (!$validToken) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Lien de réinitialisation invalide ou expiré.'
+                ], 404);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'email' => $validToken->email,
+                'message' => 'Lien de réinitialisation valide.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Erreur lors de la vérification du lien.'
+            ], 500);
+        }
+    }
+
+    public function findEmailByToken(Request $request)
+    {
+        $request->validate(['token' => 'required']);
+
+        $tokenData = DB::table('password_reset_tokens')
+            ->where('token', $request->token)
+            ->where('created_at', '>', Carbon::now()->subHours(24))
+            ->first();
+
+        if (!$tokenData) {
+            return response()->json([
+                'email' => null,
+                'message' => 'Lien de réinitialisation invalide ou expiré.'
+            ], 404);
+        }
+
+        return response()->json([
+            'email' => $tokenData->email,
+            'message' => 'Email trouvé avec succès.'
+        ]);
     }
 }

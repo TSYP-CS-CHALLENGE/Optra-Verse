@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Notifications\CustomResetPassword;
 use App\Notifications\CustomVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -86,5 +87,10 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
      public function sendEmailVerificationNotification()
     {
         $this->notify(new CustomVerifyEmail());
+    }
+
+       public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomResetPassword($token));
     }
 }

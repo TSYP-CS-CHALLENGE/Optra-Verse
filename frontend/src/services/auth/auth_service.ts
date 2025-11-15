@@ -44,6 +44,26 @@ export const updateProfile = async (userData: FormData): Promise<User> => {
 };
 
 export const resendVerificationEmail = async (email: string) => {
-    const response = await api.post('/auth/verify_resend', { email });
-    return response.data;
+  const response = await api.post('/auth/verify_resend', { email });
+  return response.data;
+};
+
+export const forgotPassword = async (email: string) => {
+  const response = await api.post('/auth/forgot-password', { email });
+  return response.data;
+};
+
+export const resetPassword = async (email: string, token: string, password: string, password_confirmation: string) => {
+  const response = await api.post('/auth/reset-password', {
+    email,
+    token,
+    password,
+    password_confirmation
+  });
+  return response.data;
+};
+
+export const verifyResetToken = async (token: string) => {
+  const response = await api.post('/auth/verify-reset-token', { token });
+  return response.data;
 };

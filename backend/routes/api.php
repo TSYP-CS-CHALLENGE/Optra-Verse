@@ -17,6 +17,10 @@ Route::prefix('auth')->group(function () {
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
         ->name('verification.verify');
     Route::post('verify_resend', [AuthController::class, 'resend']);
+    Route::post('/forgot-password', [AuthController::class, 'forgot']);
+    Route::post('/reset-password', [AuthController::class, 'reset']);
+    Route::post('/verify-reset-token', [AuthController::class, 'verifyToken']);
+    Route::post('/find-email-by-token', [AuthController::class, 'findEmailByToken']);
 });
 
 Route::middleware([InjectJwtFromCookie::class, 'auth:api'])->group(function () {

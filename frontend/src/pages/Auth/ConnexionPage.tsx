@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown, PlayCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Phone, IdCard, Briefcase, Search, Building, AlertCircle, Languages, ChevronDown, PlayCircle, ArrowLeft } from "lucide-react";
 import logo from "@/assets/images/logo.jpg";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
@@ -8,10 +9,12 @@ import { LanguageContext, useTranslation } from '@/i18n';
 import FooterComponent from "@/components/ui/layouts/utils/Footer";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { login, register, resendVerificationEmail } from '@/services/auth/auth_service';
+import { login, register, resendVerificationEmail, forgotPassword, resetPassword, verifyResetToken } from '@/services/auth/auth_service';
 import type { LoginCredentials } from "@/models/AuthModels";
 import { useAuth } from "@/contexts/AuthContext";
-import InstallPrompt from "@/components/ui/layouts/utils/InstallPrompt";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
+
 
 export default function ConnexionPage() {
     const [showLogin, setShowLogin] = useState(true);
@@ -44,6 +47,15 @@ export default function ConnexionPage() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [backendError, setBackendError] = useState<string>('');
     const [loading, setLoading] = useState(false);
+    const [authView, setAuthView] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
+    const [resetEmail, setResetEmail] = useState('');
+    const [searchParams] = useSearchParams();
+    useEffect(() => {
+        const token = searchParams.get('token');
+        if (token) {
+            setAuthView('reset-password');
+        }
+    }, [searchParams]);
 
     const changeLanguage = (lng: string) => {
         setLanguage(lng);
@@ -66,10 +78,27 @@ export default function ConnexionPage() {
     ];
 
     const currentLanguageInfo = languages.find(lang => lang.value === currentLanguage) || languages[0];
+
     const showOnboardingSteps = () => {
         navigate('/onboarding');
     };
+
     const isRTL = currentLanguage === 'ar';
+
+    const handleShowForgotPassword = () => {
+        setAuthView('forgot-password');
+    };
+
+    const handleShowResetPassword = (email: string) => {
+        setResetEmail(email);
+    };
+
+    const handleBackToLogin = () => {
+        setAuthView('login');
+        setResetEmail('');
+        setBackendError('');
+        setErrors({});
+    };
 
     if (!mounted) {
         return (
@@ -400,358 +429,227 @@ export default function ConnexionPage() {
                     </div>
 
                     <div className="form-container card-glass rounded-xl shadow-xl border text-center p-5 transition-colors duration-300">
-                        <div className="toggle-container rounded-2xl p-1.5 mb-8 transition-colors duration-300">
-                            <button
-                                onClick={() => { setShowLogin(true); resetForm(); }}
-                                className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${showLogin
-                                    ? 'toggle-btn-active shadow-sm'
-                                    : 'toggle-btn-inactive'
-                                    }`}
-                            >
-                                {t('auth.login')}
-                            </button>
-                            <button
-                                onClick={() => { setShowLogin(false); resetForm(); }}
-                                className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${!showLogin
-                                    ? 'toggle-btn-active shadow-sm'
-                                    : 'toggle-btn-inactive'
-                                    }`}
-                            >
-                                {t('auth.register')}
-                            </button>
-                        </div>
-
-                        {backendError && (
-                            <div className={`alert-message mb-6 p-4 rounded-xl flex items-center space-x-3 ${backendError.includes('success')
-                                ? 'alert-success'
-                                : 'alert-error'
-                                }`}>
-                                <AlertCircle className="alert-icon w-5 h-5 shrink-0" />
-                                <p className="alert-text text-sm font-medium">{backendError}</p>
-                            </div>
-                        )}
-                        {backendError && backendError.includes('verify your email') && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                                <div className="flex items-center gap-3">
-                                    <Mail className="w-5 h-5 text-blue-500" />
-                                    <div className="flex-1">
-                                        <p className="text-blue-800 text-sm">
-                                            Didn't receive the verification email?
-                                        </p>
-                                        <Button
-                                            onClick={() => handleResendVerification(formData.email)}
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-2 text-blue-600 border-blue-300 hover:bg-blue-100"
-                                        >
-                                            Resend Verification Email
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {showLogin ? (
-                            <form onSubmit={handleLogin} className="space-y-5">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <div className="relative">
-                                            <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                            <input
-                                                type="email"
-                                                placeholder={t('auth.email')}
-                                                value={formData.email}
-                                                onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl transition-all duration-300 ${errors.email
-                                                    ? 'input-error'
-                                                    : 'input-normal'
-                                                    }`}
-                                            />
-                                        </div>
-                                        {errors.email && (
-                                            <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.email}</p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="relative">
-                                            <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                            <input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder={t('auth.password')}
-                                                value={formData.password}
-                                                onChange={(e) => handleInputChange('password', e.target.value)}
-                                                className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-4 rounded-2xl transition-all duration-300 ${errors.password
-                                                    ? 'input-error'
-                                                    : 'input-normal'
-                                                    }`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
-                                            >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
-                                        </div>
-                                        {errors.password && (
-                                            <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.password}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Forgot Password */}
-                                <div className={`text-${isRTL ? 'left' : 'right'}`}>
-                                    <button type="button" className="forgot-password-btn text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                                        {t('auth.forgotPassword')}
+                        {authView === 'forgot-password' ? (
+                            <ForgotPassword
+                                onBackToLogin={handleBackToLogin}
+                                onShowReset={handleShowResetPassword}
+                            />
+                        ) : authView === 'reset-password' ? (
+                            <ResetPassword
+                                token={searchParams.get('token') || ''}
+                                onBackToLogin={handleBackToLogin}
+                            />
+                        ) : (
+                            <>
+                                <div className="toggle-container rounded-2xl p-1.5 mb-8 transition-colors duration-300">
+                                    <button
+                                        onClick={() => { setAuthView('login'); resetForm(); }}
+                                        className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${authView === 'login'
+                                            ? 'toggle-btn-active shadow-sm'
+                                            : 'toggle-btn-inactive'
+                                            }`}
+                                    >
+                                        {t('auth.login')}
+                                    </button>
+                                    <button
+                                        onClick={() => { setAuthView('register'); resetForm(); }}
+                                        className={`toggle-btn flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${authView === 'register'
+                                            ? 'toggle-btn-active shadow-sm'
+                                            : 'toggle-btn-inactive'
+                                            }`}
+                                    >
+                                        {t('auth.register')}
                                     </button>
                                 </div>
 
-                                {/* Login Button */}
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="login-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? (
-                                        <div className="flex items-center justify-center">
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            <span>{t('buttons.signingIn')}</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span>{t('auth.signIn')}</span>
-                                            <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
-                                        </>
-                                    )}
-                                </Button>
-                            </form>
-                        ) : (
-                            /* Registration Flow */
-                            <div className="space-y-6">
-                                {/* Role Selection */}
-                                {!selectedRole ? (
-                                    <div className="space-y-4">
-                                        <h3 className="role-title text-lg font-semibold text-center mb-4 text-foreground">{t('roles.chooseRole')}</h3>
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedRole('jobseeker'); setErrors({});
-                                                    setBackendError('');
-                                                }}
-                                                className="role-btn jobseeker-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-600 dark:hover:border-orange-400 dark:hover:bg-orange-900/20"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <Search className="role-icon jobseeker-icon w-8 h-8 text-orange-600 dark:text-orange-400" />
-                                                    <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
-                                                        <h4 className="role-name font-semibold text-foreground">{t('roles.jobseeker')}</h4>
-                                                        <p className="role-description text-muted-foreground">{t('roles.jobseekerDesc')}</p>
-                                                    </div>
-                                                </div>
-                                            </button>
-                                            <button
-                                                onClick={() => setSelectedRole('recruiter')}
-                                                className="role-btn recruiter-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-600 dark:hover:border-blue-400 dark:hover:bg-blue-900/20"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <Building className="role-icon recruiter-icon w-8 h-8 text-blue-600 dark:text-blue-400" />
-                                                    <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
-                                                        <h4 className="role-name font-semibold text-foreground">{t('roles.recruiter')}</h4>
-                                                        <p className="role-description text-muted-foreground">{t('roles.recruiterDesc')}</p>
-                                                    </div>
-                                                </div>
-                                            </button>
+                                {backendError && (
+                                    <div className={`alert-message mb-6 p-4 rounded-xl flex items-center space-x-3 ${backendError.includes('success')
+                                        ? 'alert-success'
+                                        : 'alert-error'
+                                        }`}>
+                                        <AlertCircle className="alert-icon w-5 h-5 shrink-0" />
+                                        <p className="alert-text text-sm font-medium">{backendError}</p>
+                                    </div>
+                                )}
+                                {backendError && backendError.includes('verify your email') && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <Mail className="w-5 h-5 text-blue-500" />
+                                            <div className="flex-1">
+                                                <p className="text-blue-800 text-sm">
+                                                    Didn't receive the verification email?
+                                                </p>
+                                                <Button
+                                                    onClick={() => handleResendVerification(formData.email)}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="mt-2 text-blue-600 border-blue-300 hover:bg-blue-100"
+                                                >
+                                                    Resend Verification Email
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                ) : (
-                                    /* Registration Form */
-                                    <form onSubmit={handleRegister} className="space-y-4">
-                                        <div className="flex items-center gap-2 mb-4">
+                                )}
+
+                                {authView === 'login' ? (
+                                    <form onSubmit={handleLogin} className="space-y-5">
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="relative">
+                                                    <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                    <input
+                                                        type="email"
+                                                        placeholder={t('auth.email')}
+                                                        value={formData.email}
+                                                        onChange={(e) => handleInputChange('email', e.target.value)}
+                                                        className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl transition-all duration-300 ${errors.email
+                                                            ? 'input-error'
+                                                            : 'input-normal'
+                                                            }`}
+                                                    />
+                                                </div>
+                                                {errors.email && (
+                                                    <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.email}</p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="relative">
+                                                    <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        placeholder={t('auth.password')}
+                                                        value={formData.password}
+                                                        onChange={(e) => handleInputChange('password', e.target.value)}
+                                                        className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-4 rounded-2xl transition-all duration-300 ${errors.password
+                                                            ? 'input-error'
+                                                            : 'input-normal'
+                                                            }`}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
+                                                    >
+                                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                    </button>
+                                                </div>
+                                                {errors.password && (
+                                                    <p className="error-text text-red-500 text-sm mt-1 text-left">{errors.password}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Forgot Password */}
+                                        <div className={`text-${isRTL ? 'left' : 'right'}`}>
                                             <button
                                                 type="button"
-                                                onClick={() => setSelectedRole(null)}
-                                                className="back-btn text-muted-foreground hover:text-foreground transition-colors"
+                                                onClick={handleShowForgotPassword}
+                                                className="forgot-password-btn text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                                             >
-                                                <ArrowRight className={`w-5 h-5 transform ${isRTL ? 'rotate-0' : 'rotate-180'}`} />
+                                                {t('auth.forgotPassword')}
                                             </button>
-                                            <span className="role-indicator text-sm font-medium capitalize text-muted-foreground">
-                                                {t(`roles.${selectedRole}`)} {t('roles.registration')}
-                                            </span>
                                         </div>
 
-                                        {/* Common Fields */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder={t('auth.firstName')}
-                                                    value={formData.name}
-                                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.name
-                                                        ? 'input-error'
-                                                        : 'input-normal'
-                                                        }`}
-                                                />
-                                                {errors.name && <p className="error-text text-red-500 text-sm mt-1">{errors.name}</p>}
+                                        {/* Login Button */}
+                                        <Button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="login-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? (
+                                                <div className="flex items-center justify-center">
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                    <span>{t('buttons.signingIn')}</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span>{t('auth.signIn')}</span>
+                                                    <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+                                                </>
+                                            )}
+                                        </Button>
+                                    </form>
+                                ) : (
+                                    /* Registration Flow */
+                                    <div className="space-y-6">
+                                        {/* Role Selection */}
+                                        {!selectedRole ? (
+                                            <div className="space-y-4">
+                                                <h3 className="role-title text-lg font-semibold text-center mb-4 text-foreground">{t('roles.chooseRole')}</h3>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedRole('jobseeker'); setErrors({});
+                                                            setBackendError('');
+                                                        }}
+                                                        className="role-btn jobseeker-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-600 dark:hover:border-orange-400 dark:hover:bg-orange-900/20"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Search className="role-icon jobseeker-icon w-8 h-8 text-orange-600 dark:text-orange-400" />
+                                                            <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                                                                <h4 className="role-name font-semibold text-foreground">{t('roles.jobseeker')}</h4>
+                                                                <p className="role-description text-muted-foreground">{t('roles.jobseekerDesc')}</p>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSelectedRole('recruiter')}
+                                                        className="role-btn recruiter-btn p-4 border-2 rounded-2xl transition-all duration-300 text-left hover:scale-105 border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-600 dark:hover:border-blue-400 dark:hover:bg-blue-900/20"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Building className="role-icon recruiter-icon w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                                            <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                                                                <h4 className="role-name font-semibold text-foreground">{t('roles.recruiter')}</h4>
+                                                                <p className="role-description text-muted-foreground">{t('roles.recruiterDesc')}</p>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder={t('auth.lastName')}
-                                                    value={formData.prenom}
-                                                    onChange={(e) => handleInputChange('prenom', e.target.value)}
-                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.prenom
-                                                        ? 'input-error'
-                                                        : 'input-normal'
-                                                        }`}
-                                                />
-                                                {errors.prenom && <p className="error-text text-red-500 text-sm mt-1">{errors.prenom}</p>}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="relative">
-                                                <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                <input
-                                                    type="email"
-                                                    placeholder={t('auth.email')}
-                                                    value={formData.email}
-                                                    onChange={(e) => handleInputChange('email', e.target.value)}
-                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.email
-                                                        ? 'input-error'
-                                                        : 'input-normal'
-                                                        }`}
-                                                />
-                                            </div>
-                                            {errors.email && <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="relative">
-                                                <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                <input
-                                                    type={showPassword ? "text" : "password"}
-                                                    placeholder={t('auth.password')}
-                                                    value={formData.password}
-                                                    onChange={(e) => handleInputChange('password', e.target.value)}
-                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-3 rounded-xl transition-all duration-300 ${errors.password
-                                                        ? 'input-error'
-                                                        : 'input-normal'
-                                                        }`}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
-                                                >
-                                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                                </button>
-                                            </div>
-                                            {errors.password && <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="relative">
-                                                <Phone className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                <input
-                                                    type="tel"
-                                                    placeholder={t('auth.phone')}
-                                                    value={formData.phone}
-                                                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.phone
-                                                        ? 'input-error'
-                                                        : 'input-normal'
-                                                        }`}
-                                                />
-                                            </div>
-                                            {errors.phone && <p className="error-text text-red-500 text-sm mt-1">{errors.phone}</p>}
-                                        </div>
-
-                                        {/* Job Seeker Specific Fields */}
-                                        {selectedRole === 'jobseeker' && (
-                                            <>
-                                                <div className="space-y-2">
-                                                    <div className="relative">
-                                                        <IdCard className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                        <input
-                                                            type="text"
-                                                            placeholder={t('forms.cin')}
-                                                            value={formData.cin}
-                                                            onChange={(e) => handleInputChange('cin', e.target.value)}
-                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.cin
-                                                                ? 'input-error'
-                                                                : 'input-normal'
-                                                                }`}
-                                                        />
-                                                    </div>
-                                                    {errors.cin && <p className="error-text text-red-500 text-sm mt-1">{errors.cin}</p>}
+                                        ) : (
+                                            /* Registration Form */
+                                            <form onSubmit={handleRegister} className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedRole(null)}
+                                                        className="back-btn text-muted-foreground hover:text-foreground transition-colors"
+                                                    >
+                                                        <ArrowRight className={`w-5 h-5 transform ${isRTL ? 'rotate-0' : 'rotate-180'}`} />
+                                                    </button>
+                                                    <span className="role-indicator text-sm font-medium capitalize text-muted-foreground">
+                                                        {t(`roles.${selectedRole}`)} {t('roles.registration')}
+                                                    </span>
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadResume')} *</label>
-                                                    <label className="file-upload-area flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
-                                                        <input
-                                                            type="file"
-                                                            className="hidden"
-                                                            accept=".pdf,.doc,.docx"
-                                                            onChange={(e) => handleFileChange('resume', e.target.files?.[0] || null)}
-                                                        />
-                                                        <Briefcase className="file-icon w-8 h-8 mb-2 text-muted-foreground" />
-                                                        <span className="file-text text-sm text-muted-foreground">{t('forms.uploadResume')}</span>
-                                                        {formData.resume && (
-                                                            <span className="file-name text-xs mt-1 text-primary">{formData.resume.name}</span>
-                                                        )}
-                                                    </label>
-                                                    {errors.resume && <p className="error-text text-red-500 text-sm mt-1">{errors.resume}</p>}
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Recruiter Specific Fields */}
-                                        {selectedRole === 'recruiter' && (
-                                            <>
-                                                <div className="space-y-2">
-                                                    <div className="relative">
-                                                        <Building className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
-                                                        <input
-                                                            type="text"
-                                                            placeholder={t('forms.companyName')}
-                                                            value={formData.company}
-                                                            onChange={(e) => handleInputChange('company', e.target.value)}
-                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.company
-                                                                ? 'input-error'
-                                                                : 'input-normal'
-                                                                }`}
-                                                        />
-                                                    </div>
-                                                    {errors.company && <p className="error-text text-red-500 text-sm mt-1">{errors.company}</p>}
-                                                </div>
-
+                                                {/* Common Fields */}
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <input
                                                             type="text"
-                                                            placeholder={t('forms.position')}
-                                                            value={formData.position}
-                                                            onChange={(e) => handleInputChange('position', e.target.value)}
-                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.position
+                                                            placeholder={t('auth.firstName')}
+                                                            value={formData.name}
+                                                            onChange={(e) => handleInputChange('name', e.target.value)}
+                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.name
                                                                 ? 'input-error'
                                                                 : 'input-normal'
                                                                 }`}
                                                         />
-                                                        {errors.position && <p className="error-text text-red-500 text-sm mt-1">{errors.position}</p>}
+                                                        {errors.name && <p className="error-text text-red-500 text-sm mt-1">{errors.name}</p>}
                                                     </div>
                                                     <div className="space-y-2">
                                                         <input
                                                             type="text"
-                                                            placeholder={t('forms.industry')}
-                                                            value={formData.industry}
-                                                            onChange={(e) => handleInputChange('industry', e.target.value)}
-                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.industry
+                                                            placeholder={t('auth.lastName')}
+                                                            value={formData.prenom}
+                                                            onChange={(e) => handleInputChange('prenom', e.target.value)}
+                                                            className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.prenom
                                                                 ? 'input-error'
                                                                 : 'input-normal'
                                                                 }`}
                                                         />
-                                                        {errors.industry && <p className="error-text text-red-500 text-sm mt-1">{errors.industry}</p>}
+                                                        {errors.prenom && <p className="error-text text-red-500 text-sm mt-1">{errors.prenom}</p>}
                                                     </div>
                                                 </div>
 
@@ -759,79 +657,233 @@ export default function ConnexionPage() {
                                                     <div className="relative">
                                                         <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                                         <input
-                                                            type="url"
-                                                            placeholder={t('forms.website')}
-                                                            value={formData.website}
-                                                            onChange={(e) => handleInputChange('website', e.target.value)}
-                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 input-normal`}
+                                                            type="email"
+                                                            placeholder={t('auth.email')}
+                                                            value={formData.email}
+                                                            onChange={(e) => handleInputChange('email', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.email
+                                                                ? 'input-error'
+                                                                : 'input-normal'
+                                                                }`}
                                                         />
                                                     </div>
+                                                    {errors.email && <p className="error-text text-red-500 text-sm mt-1">{errors.email}</p>}
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadLogo')}</label>
-                                                    <label className="file-upload-area flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
+                                                    <div className="relative">
+                                                        <Lock className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                                                         <input
-                                                            type="file"
-                                                            className="hidden"
-                                                            accept=".jpg,.jpeg,.png"
-                                                            onChange={(e) => handleFileChange('companyLogo', e.target.files?.[0] || null)}
+                                                            type={showPassword ? "text" : "password"}
+                                                            placeholder={t('auth.password')}
+                                                            value={formData.password}
+                                                            onChange={(e) => handleInputChange('password', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} py-3 rounded-xl transition-all duration-300 ${errors.password
+                                                                ? 'input-error'
+                                                                : 'input-normal'
+                                                                }`}
                                                         />
-                                                        <Building className="file-icon w-6 h-6 mb-1 text-muted-foreground" />
-                                                        <span className="file-text text-xs text-muted-foreground">{t('forms.uploadLogo')}</span>
-                                                        {formData.companyLogo && (
-                                                            <span className="file-name text-xs mt-1 text-primary">{formData.companyLogo.name}</span>
-                                                        )}
-                                                    </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            className={`password-toggle-btn absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors`}
+                                                        >
+                                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                        </button>
+                                                    </div>
+                                                    {errors.password && <p className="error-text text-red-500 text-sm mt-1">{errors.password}</p>}
                                                 </div>
-                                            </>
+
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <Phone className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                        <input
+                                                            type="tel"
+                                                            placeholder={t('auth.phone')}
+                                                            value={formData.phone}
+                                                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                                                            className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.phone
+                                                                ? 'input-error'
+                                                                : 'input-normal'
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                    {errors.phone && <p className="error-text text-red-500 text-sm mt-1">{errors.phone}</p>}
+                                                </div>
+
+                                                {/* Job Seeker Specific Fields */}
+                                                {selectedRole === 'jobseeker' && (
+                                                    <>
+                                                        <div className="space-y-2">
+                                                            <div className="relative">
+                                                                <IdCard className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={t('forms.cin')}
+                                                                    value={formData.cin}
+                                                                    onChange={(e) => handleInputChange('cin', e.target.value)}
+                                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.cin
+                                                                        ? 'input-error'
+                                                                        : 'input-normal'
+                                                                        }`}
+                                                                />
+                                                            </div>
+                                                            {errors.cin && <p className="error-text text-red-500 text-sm mt-1">{errors.cin}</p>}
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadResume')} *</label>
+                                                            <label className="file-upload-area flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    accept=".pdf,.doc,.docx"
+                                                                    onChange={(e) => handleFileChange('resume', e.target.files?.[0] || null)}
+                                                                />
+                                                                <Briefcase className="file-icon w-8 h-8 mb-2 text-muted-foreground" />
+                                                                <span className="file-text text-sm text-muted-foreground">{t('forms.uploadResume')}</span>
+                                                                {formData.resume && (
+                                                                    <span className="file-name text-xs mt-1 text-primary">{formData.resume.name}</span>
+                                                                )}
+                                                            </label>
+                                                            {errors.resume && <p className="error-text text-red-500 text-sm mt-1">{errors.resume}</p>}
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {/* Recruiter Specific Fields */}
+                                                {selectedRole === 'recruiter' && (
+                                                    <>
+                                                        <div className="space-y-2">
+                                                            <div className="relative">
+                                                                <Building className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={t('forms.companyName')}
+                                                                    value={formData.company}
+                                                                    onChange={(e) => handleInputChange('company', e.target.value)}
+                                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 ${errors.company
+                                                                        ? 'input-error'
+                                                                        : 'input-normal'
+                                                                        }`}
+                                                                />
+                                                            </div>
+                                                            {errors.company && <p className="error-text text-red-500 text-sm mt-1">{errors.company}</p>}
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="space-y-2">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={t('forms.position')}
+                                                                    value={formData.position}
+                                                                    onChange={(e) => handleInputChange('position', e.target.value)}
+                                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.position
+                                                                        ? 'input-error'
+                                                                        : 'input-normal'
+                                                                        }`}
+                                                                />
+                                                                {errors.position && <p className="error-text text-red-500 text-sm mt-1">{errors.position}</p>}
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={t('forms.industry')}
+                                                                    value={formData.industry}
+                                                                    onChange={(e) => handleInputChange('industry', e.target.value)}
+                                                                    className={`input-field w-full px-4 py-3 rounded-xl transition-all duration-300 ${errors.industry
+                                                                        ? 'input-error'
+                                                                        : 'input-normal'
+                                                                        }`}
+                                                                />
+                                                                {errors.industry && <p className="error-text text-red-500 text-sm mt-1">{errors.industry}</p>}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <div className="relative">
+                                                                <Mail className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                                                                <input
+                                                                    type="url"
+                                                                    placeholder={t('forms.website')}
+                                                                    value={formData.website}
+                                                                    onChange={(e) => handleInputChange('website', e.target.value)}
+                                                                    className={`input-field w-full ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl transition-all duration-300 input-normal`}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <label className="file-label text-sm font-medium text-foreground">{t('forms.uploadLogo')}</label>
+                                                            <label className="file-upload-area flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-border hover:border-primary bg-background/50">
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    accept=".jpg,.jpeg,.png"
+                                                                    onChange={(e) => handleFileChange('companyLogo', e.target.files?.[0] || null)}
+                                                                />
+                                                                <Building className="file-icon w-6 h-6 mb-1 text-muted-foreground" />
+                                                                <span className="file-text text-xs text-muted-foreground">{t('forms.uploadLogo')}</span>
+                                                                {formData.companyLogo && (
+                                                                    <span className="file-name text-xs mt-1 text-primary">{formData.companyLogo.name}</span>
+                                                                )}
+                                                            </label>
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                <div className="terms-agreement text-center text-sm text-muted-foreground">
+                                                    {t('legal.agreement')}{" "}
+                                                    <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
+                                                        {t('legal.terms')}
+                                                    </button>{" "}
+                                                    {t('common.and')}{" "}
+                                                    <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
+                                                        {t('legal.privacyPolicy')}
+                                                    </button>
+                                                </div>
+
+                                                <Button
+                                                    type="submit"
+                                                    disabled={loading}
+                                                    className="register-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {loading ? (
+                                                        <div className="flex items-center justify-center">
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                            <span>{t('buttons.registering')}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <span>{t('buttons.createAccount')}</span>
+                                                            <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </form>
                                         )}
-
-                                        <div className="terms-agreement text-center text-sm text-muted-foreground">
-                                            {t('legal.agreement')}{" "}
-                                            <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
-                                                {t('legal.terms')}
-                                            </button>{" "}
-                                            {t('common.and')}{" "}
-                                            <button type="button" className="terms-link font-medium text-primary hover:text-primary/80 transition-colors">
-                                                {t('legal.privacyPolicy')}
-                                            </button>
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="register-btn w-full bg-gradient-primary text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {loading ? (
-                                                <div className="flex items-center justify-center">
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                    <span>{t('buttons.registering')}</span>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <span>{t('buttons.createAccount')}</span>
-                                                    <ArrowRight className={`ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
-                                                </>
-                                            )}
-                                        </Button>
-                                    </form>
+                                    </div>
                                 )}
-                            </div>
+                            </>
                         )}
                     </div>
 
-                    <div className="text-center mt-8">
-                        <p className="auth-switch-text text-sm text-muted-foreground">
-                            {showLogin ? t('auth.noAccount') : t('auth.hasAccount')}{" "}
-                            <button
-                                onClick={() => { setShowLogin(!showLogin); resetForm(); }}
-                                className="auth-switch-btn font-medium text-primary hover:text-primary/80 transition-colors"
-                            >
-                                {showLogin ? t('auth.signUp') : t('auth.signIn')}
-                            </button>
-                        </p>
-                    </div>
+                    {authView !== 'forgot-password' && authView !== 'reset-password' && (
+                        <div className="text-center mt-8">
+                            <p className="auth-switch-text text-sm text-muted-foreground">
+                                {authView === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}{" "}
+                                <button
+                                    onClick={() => {
+                                        setAuthView(authView === 'login' ? 'register' : 'login');
+                                        resetForm();
+                                    }}
+                                    className="auth-switch-btn font-medium text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    {authView === 'login' ? t('auth.signUp') : t('auth.signIn')}
+                                </button>
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
             <FooterComponent />

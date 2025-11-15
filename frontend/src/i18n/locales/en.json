@@ -18,6 +18,18 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "email": "Email",
+    "forgotPasswordInstructions": "Enter your email address and we'll send you a link to reset your password.",
+    "resetPassword": "Reset Password",
+    "resetPasswordInstructions": "Enter your new password below.",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "resetEmailSent": "Reset email sent!",
+    "checkYourEmail": "Check your email for the reset link.",
+    "passwordResetSuccess": "Password reset successfully!",
+    "redirectingToLogin": "Redirecting to login...",
+    "invalidToken": "Invalid or expired token",
+    "requestNewLink": "Please request a new reset link.",
+    "backToLogin": "Back to login",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "firstName": "First Name",
@@ -73,7 +85,11 @@
   "buttons": {
     "signingIn": "Signing in...",
     "registering": "Registering...",
-    "createAccount": "Create  Account"
+    "createAccount": "Create  Account",
+    "sendResetLink": "Send Reset Link",
+    "resetPassword": "Reset Password",
+    "resetting": "Resetting...",
+    "sending": "Sending..."
   },
   "legal": {
     "terms": "Terms",
@@ -284,7 +300,8 @@
   },
   "loading": {
     "title": "Preparing your experience...",
-    "ariaLabel": "Loading content"
+    "ariaLabel": "Loading content",
+    "verifyingToken": "Verifying reset token..."
   },
   "dashboard": {
     "welcome": "Welcome",

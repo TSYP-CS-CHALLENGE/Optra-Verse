@@ -44,10 +44,12 @@ function AppContent() {
       (location.search.includes('success=true') || location.search.includes('success=false'));
   };
 
+ const isForgetPassword = () => location.search.includes('token');
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        if (isEmailVerificationUrl()) {
+        if (isEmailVerificationUrl() || isForgetPassword()) {
           setAppState(prev => ({
             ...prev,
             currentView: 'main',
