@@ -58,7 +58,7 @@ const [endCall, setEndCall] = useState(false);
             scale={2}
             config={config}
             onFirstResponse={() => setIsLoading(false)}
-            endCall={endCall}           // ADD THIS
+            endCall={endCall}        
             onEndCallComplete={() => setEndCall(false)}
           />
         </Suspense>

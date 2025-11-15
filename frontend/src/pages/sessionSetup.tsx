@@ -56,9 +56,7 @@ export default function SessionSetup() {
     if (!config.micGranted|| !config.camGranted) return;
 
     const fullConfig = {
-      // From dashboard
       ...interview,
-      // From form
       difficulty: config.difficulty,
       interview_type: config.interview_type,
       ai_personality: config.ai_personality,

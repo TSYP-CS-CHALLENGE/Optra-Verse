@@ -9,6 +9,7 @@ import Session from './pages/session';
 import { LanguageProvider } from "./i18n";
 import { ThemeProvider } from "./contexts/ThemeProvider";
 import SessionSetup from './pages/sessionSetup';
+import InterviewResume from './pages/interviewResume';
 
 
 function AppContent() {
@@ -96,6 +97,7 @@ function AppContent() {
                   <Route path="/interviewsDashboard" element={<InterviewsDashboard/>} />
                   <Route path="/Session" element ={<Session/>} />
                   <Route path="/session-setup" element ={<SessionSetup/>} />
+                  <Route path="/interview-resume" element={<InterviewResume />} />
 
                 </Route>
                 {/* <Route path="unauthorized" element={<UnauthorizedPage />} /> */}

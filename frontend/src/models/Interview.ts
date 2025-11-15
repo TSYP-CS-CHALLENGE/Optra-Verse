@@ -30,4 +30,5 @@ export default interface Interview {
   experience_years?: string
   place?: string
   work_mode?: "hybrid" | "remote" | "inplace"
+  discussion?: string[]
 }
