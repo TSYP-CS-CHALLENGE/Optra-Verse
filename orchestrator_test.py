@@ -451,16 +451,14 @@ class ConversationalOrchestrator:
 
     Interview Style:
     {style_instruction}
-    - Ask **exactly ONE** question.
+    - without introducing yourself Ask **exactly ONE** question in less than 2 lines .
     - Match the **{diff} difficulty** and **{itype} type**.
-    - Use **{tone}** tone.
     - **End with a question mark**.
     - Do NOT give hints, answers, or feedback.
 
     Conversation so far:
     {context}
 
-    Candidate: {user_input}
 
     Recruiter (you):"""
 
@@ -475,7 +473,6 @@ class ConversationalOrchestrator:
         context_lines = []
         for entry in list(self.conversation_history)[-8:]:
             context_lines.append(entry)
-        
         return "\n".join(context_lines) if context_lines else "No previous conversation."
     
     def _handle_response(self, response: str, user_input: str):

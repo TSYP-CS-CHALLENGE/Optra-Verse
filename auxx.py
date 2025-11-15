@@ -142,24 +142,82 @@ class StreamingWhisperTranscriber:
                     "status": "error",
                     "message": "Server error. Using defaults."
                 }))
+            """ static_intro = (
+                "Hi, I'm your OptraVerse AI recruiter! "
+                "I'm here today to test your skills for this job. "
+                "So make yourself comfortable and introduce yourself!"
+            )
+            payload = {
+                "transcription": "",
+                "response": generate_speak_and_sync_payload(static_intro)
+            }
+            await websocket.send_text(json.dumps(payload)) """ 
+
             try:
                 while True:
-                    data = await websocket.receive_bytes()
-                    if not data:
-                        continue
+                    # Receive the full message dictionary
+                    message = await websocket.receive()
+                    
+                    # Handle incoming data
+                    if message.get('type') == 'websocket.receive':
+                        if message.get('bytes'):
+                            # It's audio data
+                            data = message['bytes']
+                            if not data:
+                                continue
+                            
+                            audio_np = np.frombuffer(data, dtype=np.float32)
+                            logger.debug(f"Received audio chunk: {len(audio_np)} samples")
 
-                    audio_np = np.frombuffer(data, dtype=np.float32)
-                    logger.debug(f"Received audio chunk: {len(audio_np)} samples")
+                            self.audio_buffer.extend(audio_np)
+                            if len(self.audio_buffer) >= self.chunk_size:
+                                self._process_audio_chunk()
 
-                    self.audio_buffer.extend(audio_np)
-                    if len(self.audio_buffer) >= self.chunk_size:
-                        self._process_audio_chunk()
+                        elif message.get('text'):
+                            # It's a text (control) message
+                            data = message['text']
+                            logger.info(f"Received text message: {data}")
+                            
+                            try:
+                                json_message = json.loads(data)
+                                # Check for the end_session action
+                                if json_message.get("action") == "end_session":
+                                    logger.info("Received end_session action. Ending conversation.")
+                                    
+                                    # 1. Get conversation history from orchestrator
+                                    history = []
+                                    if self.orchestrator:
+                                        history = self.orchestrator.get_conversation_history()
+                                    
+                                    # 2. Send history back to client
+                                    await websocket.send_text(json.dumps({
+                                        "status": "session_ended",
+                                        "conversation_history": history
+                                    }))
+                                    
+                                    # 3. Stop the orchestrator
+                                    if self.orchestrator:
+                                        self.orchestrator.stop()
+                                        
+                                    # 4. Break the loop to close this specific connection
+                                    break 
+                                    
+                            except json.JSONDecodeError:
+                                logger.warning(f"Received invalid JSON message: {data}")
+                            except Exception as e:
+                                logger.error(f"Error processing text message: {e}")
+                    
+                    # Handle client disconnect
+                    elif message.get('type') == 'websocket.disconnect':
+                        logger.info("WebSocket client disconnected")
+                        self.websocket_connection = None
+                        break # Exit loop on disconnect
 
             except WebSocketDisconnect:
-                logger.info("WebSocket client disconnected")
+                logger.info("WebSocket client disconnected (caught exception)")
                 self.websocket_connection = None
             except Exception as e:
-                logger.error(f"WebSocket audio error: {type(e).__name__}: {str(e)}")
+                logger.error(f"WebSocket audio/text error: {type(e).__name__}: {str(e)}")
                 self.websocket_connection = None
 
         def run_server():
