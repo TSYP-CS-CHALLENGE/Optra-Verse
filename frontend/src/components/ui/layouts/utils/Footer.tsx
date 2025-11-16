@@ -201,7 +201,7 @@ export default function Footer() {
             <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-300">
                 <Mail className="w-4 h-4 text-orange-500" />
-                <span>hello@careerboost.com</span>
+                <span>optraverse@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-300">
                 <Phone className="w-4 h-4 text-orange-500" />
