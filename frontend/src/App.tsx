@@ -22,6 +22,7 @@ import PublicRoute from './guard/publicRoutes';
 import ProtectedRoute from './guard/protectedRoutes';
 import UnauthorizedPage from './pages/Auth/UnauthorizedPage';
 
+
 type AppView = 'splash' | 'onboarding' | 'main';
 
 interface AppState {
