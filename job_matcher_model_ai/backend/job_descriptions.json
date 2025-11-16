@@ -1,0 +1,132 @@
+{
+  "Senior Python Developer - Dubai": {
+    "description": "Looking for experienced Python developer with ML expertise for Dubai-based tech company. Must have 5+ years experience with Python, Django, and cloud platforms. Arabic language skills a plus.",
+    "location": "Dubai, UAE",
+    "type": "Full-time",
+    "salary": "18,000-25,000 AED/month",
+    "required_skills": [
+      {
+        "name": "Python",
+        "type": "skill"
+      },
+      {
+        "name": "Django",
+        "type": "skill"
+      },
+      {
+        "name": "Machine Learning",
+        "type": "skill"
+      },
+      {
+        "name": "AWS",
+        "type": "skill"
+      }
+    ],
+    "department": "Engineering",
+    "status": "active"
+  },
+  "Data Scientist - Riyadh": {
+    "description": "Saudi tech company seeking Data Scientist with strong analytical skills. Experience with Python, SQL, and data visualization required. Competitive salary and benefits.",
+    "location": "Riyadh, Saudi Arabia",
+    "type": "Full-time",
+    "salary": "20,000-30,000 SAR/month",
+    "required_skills": [
+      {
+        "name": "Python",
+        "type": "skill"
+      },
+      {
+        "name": "SQL",
+        "type": "skill"
+      },
+      {
+        "name": "Data Analysis",
+        "type": "skill"
+      },
+      {
+        "name": "Tableau",
+        "type": "skill"
+      }
+    ],
+    "department": "Data",
+    "status": "active"
+  },
+  "Software Engineer - Abu Dhabi": {
+    "description": "Abu Dhabi government project seeking software engineers. Full-stack development with React and Node.js. Must have UAE experience.",
+    "location": "Abu Dhabi, UAE",
+    "type": "Full-time",
+    "salary": "15,000-22,000 AED/month",
+    "required_skills": [
+      {
+        "name": "JavaScript",
+        "type": "skill"
+      },
+      {
+        "name": "React",
+        "type": "skill"
+      },
+      {
+        "name": "Node.js",
+        "type": "skill"
+      },
+      {
+        "name": "MongoDB",
+        "type": "skill"
+      }
+    ],
+    "department": "Engineering",
+    "status": "active"
+  },
+  "ML Engineer - Remote MENA": {
+    "description": "Remote position for ML Engineer. Work with cutting-edge NLP and computer vision projects. Open to candidates across MENA region. Arabic NLP experience preferred.",
+    "location": "Remote, MENA",
+    "type": "Full-time",
+    "salary": "$60,000-90,000/year",
+    "required_skills": [
+      {
+        "name": "Python",
+        "type": "skill"
+      },
+      {
+        "name": "TensorFlow",
+        "type": "skill"
+      },
+      {
+        "name": "NLP",
+        "type": "skill"
+      },
+      {
+        "name": "Computer Vision",
+        "type": "skill"
+      }
+    ],
+    "department": "AI/ML",
+    "status": "active"
+  },
+  "DevOps Engineer - Cairo": {
+    "description": "Cairo-based startup needs DevOps Engineer. Experience with Docker, Kubernetes, and CI/CD pipelines. Growing company with equity options.",
+    "location": "Cairo, Egypt",
+    "type": "Full-time",
+    "salary": "15,000-25,000 EGP/month",
+    "required_skills": [
+      {
+        "name": "Docker",
+        "type": "skill"
+      },
+      {
+        "name": "Kubernetes",
+        "type": "skill"
+      },
+      {
+        "name": "AWS",
+        "type": "skill"
+      },
+      {
+        "name": "CI/CD",
+        "type": "skill"
+      }
+    ],
+    "department": "DevOps",
+    "status": "active"
+  }
+}
