@@ -10,8 +10,65 @@
     </div>
      
 </div>
+<br/>
+<p align="center">
 
-  [![Giscus Comments](https://img.shields.io/badge/Comments-Giscus-blue?logo=github)](#)
+  <!-- Frontend -->
+  <img src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/shadcn/ui-000000?logo=shadcnui&logoColor=white" />
+  <img src="https://img.shields.io/badge/NextThemes-111111?logo=nextdotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redux-764ABC?logo=redux&logoColor=white" />
+  <img src="https://img.shields.io/badge/i18n-Multilingual-0F9D58" />
+
+  <!-- Backend -->
+  <img src="https://img.shields.io/badge/Laravel-E74430?logo=laravel&logoColor=white" />
+  <img src="https://img.shields.io/badge/TymonJWT-000000?logo=jsonwebtokens&logoColor=white" />
+  <img src="https://img.shields.io/badge/HTTPOnlyCookies-009688?logo=cookie&logoColor=white" />
+  <img src="https://img.shields.io/badge/Notifications-FF9900?logo=mail&logoColor=white" />
+  <img src="https://img.shields.io/badge/Axios-5A29E4?logo=axios&logoColor=white" />
+
+  <!-- AI / LLM -->
+  <img src="https://img.shields.io/badge/Groq-A50034?logo=groq&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/SentenceTransformers-0A0A0A?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/ChromaDB-9D00FF?logo=databricks&logoColor=white" />
+  <img src="https://img.shields.io/badge/LlamaCloud-0000FF?logo=llama&logoColor=white" />
+
+  <!-- NLP / Utils -->
+  <img src="https://img.shields.io/badge/Deep_Translator-FFCC00?logo=googletranslate&logoColor=black" />
+  <img src="https://img.shields.io/badge/BeautifulSoup-4B8BBE?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Requests-000000?logo=python&logoColor=white" />
+
+  <!-- Data -->
+  <img src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pandas-150458?logo=pandas&logoColor=white" />
+
+  <!-- Streaming / UI -->
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" />
+
+  <!-- Frontend 3D / Web -->
+  <img src="https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white" />
+
+  <!-- Security / Auth -->
+  <img src="https://img.shields.io/badge/JWT-000000?logo=jsonwebtokens&logoColor=white" />
+
+  <!-- Tools -->
+  <img src="https://img.shields.io/badge/VSCode-007ACC?logo=visualstudiocode&logoColor=white" />
+  <img src="https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white" />
+  <img src="https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/Draw.io-F08705?logo=diagramsdotnet&logoColor=white" />
+
+  <!-- OS -->
+  <img src="https://img.shields.io/badge/Windows-0078D6?logo=windows11&logoColor=white" />
+
+  <!-- Comments -->
+  <img src="https://img.shields.io/badge/Giscus-181717?logo=github&logoColor=white" />
+
+</p>
+
 
 # 🌐 Optra Verse – AI‑Driven Career Empowerment Platform
 > Empowering job seekers in **Sub-Saharan Africa** & **MENA** with AI-powered career tools.
