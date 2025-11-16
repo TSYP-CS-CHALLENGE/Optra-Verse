@@ -212,6 +212,47 @@
 4. **Profile Completion** – Visual completion tracker  
 5. **Account Settings** – Update password, profile, resume  
 
+
+
+---
+
+## 💬 Real-Time Community Chat
+
+We've integrated **tlk.io** to provide a seamless real-time chat experience for our job seekers community. Connect with fellow job seekers, share opportunities, and get support instantly!
+
+### 🎯 Chat Features
+- **Real-time messaging** with instant delivery
+- **No registration required** - just enter a nickname
+- **Community support** for job search questions
+- **Opportunity sharing** - post job openings you find
+- **Multi-platform access** - works on all devices
+- **Professional environment** - moderated community chat
+
+### 📱 Access Points
+The chatroom is accessible through   :
+- **Floating chat button** in bottom-right corner
+
+<div align="center">
+  <img src="screenshots/chatroom_preview.png" alt="Community Chatroom" width="70%" style="border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);" />
+  <br/>
+  <figcaption>Real-time Community Chatroom for Job Seekers</figcaption>
+</div>
+
+### 🚀 Quick Start for Chat
+1. **Click any chat button** in the dashboard
+2. **Enter a nickname** - no account needed!
+3. **Start chatting** with the community
+4. **Share job tips**, ask questions, get support
+
+### 💡 Community Guidelines
+- Be respectful and professional
+- Share relevant job opportunities
+- Help others with career advice
+- Keep discussions constructive
+- No spam or promotional content
+
+
+
 ---
 
 
