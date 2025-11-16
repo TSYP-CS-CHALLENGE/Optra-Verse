@@ -1,3 +1,16 @@
+<div align="center">
+  <br />
+    <a href="#" target="_blank">
+      <img src="screenshots/banner_header.png" alt="Project Banner">
+    </a>
+  <br />
+
+   <div align="center">
+     Watch simulations of various attack types to understand threat behaviors and see our solution in action in <a href="#" target="_blank"><b>this video</b></a>
+    </div>
+</div>
+
+
 # 🌐 Optra Verse – AI‑Driven Career Empowerment Platform
 > Empowering job seekers in **Sub-Saharan Africa** & **MENA** with AI-powered career tools.
 
@@ -194,3 +207,11 @@
 
 ## 🏆 Vision
 **Optra Verse** aims to become the **#1 career development platform** in Sub-Saharan Africa and MENA by leveraging **cutting-edge technology** to connect talent with opportunity efficiently and meaningfully.
+
+## 🚀 <a name="contact">Contact us</a>
+
+We welcome any questions, feedback, or inquiries related to OptraVerse. Please feel free to reach out to us through our email: optraverse@gmail.com
+
+Visit the OptraVerse website [here](https://test/).
+
+<img src="https://github.com/IEEECSENICarthage/NeoCarthago/blob/main/assets/banner.png" alt="Contact us" width="100%">
