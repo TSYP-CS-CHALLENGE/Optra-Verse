@@ -42,6 +42,8 @@ import { getCurrentUser, logout } from "@/services/auth/auth_service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 
+import { MessageCircle } from 'lucide-react';
+import FloatingChatButton from "@/components/chatroom/floating-chat-button";
 export default function JobSeekerDashboard() {
   const { t } = useTranslation();
   const { user, LogoutUser } = useAuth();
@@ -54,7 +56,7 @@ export default function JobSeekerDashboard() {
   const [showMobileLanguageDropdown, setShowMobileLanguageDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
-
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const isRTL = currentLanguage === 'ar';
 
   useEffect(() => {
@@ -171,6 +173,7 @@ export default function JobSeekerDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex justify-between items-center h-20 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {/* Logo and Mobile Menu */}
+
             <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-4`}>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -180,7 +183,6 @@ export default function JobSeekerDashboard() {
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </motion.button>
-
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-4 cursor-pointer`}
@@ -516,7 +518,9 @@ export default function JobSeekerDashboard() {
                     {currentMenu?.description}
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent>
+
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={location.pathname}
@@ -525,6 +529,7 @@ export default function JobSeekerDashboard() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3 }}
                     >
+
                       <Outlet />
                     </motion.div>
                   </AnimatePresence>
@@ -533,6 +538,7 @@ export default function JobSeekerDashboard() {
             </motion.div>
           </div>
         </div>
+        <FloatingChatButton />
       </div>
     </motion.div>
   );
@@ -670,18 +676,18 @@ const Sidebar = ({ menuItems, stats, quickActions, recentActivities, currentMenu
 );
 
 // Mobile Sidebar Component
-const MobileSidebar = ({ 
-  menuItems, 
-  stats, 
-  currentMenu, 
-  isRTL, 
-  navigate, 
-  onClose, 
-  changeLanguage, 
-  currentLanguage, 
-  theme, 
-  user, 
-  handleLogout 
+const MobileSidebar = ({
+  menuItems,
+  stats,
+  currentMenu,
+  isRTL,
+  navigate,
+  onClose,
+  changeLanguage,
+  currentLanguage,
+  theme,
+  user,
+  handleLogout
 }: any) => (
   <div className="h-full flex flex-col">
     <div className="p-6 border-b border-slate-200/80 dark:border-slate-700/80">
@@ -731,11 +737,10 @@ const MobileSidebar = ({
               <button
                 key={language.value}
                 onClick={() => changeLanguage(language.value)}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                  currentLanguage === language.value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
-                }`}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentLanguage === language.value
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
+                  }`}
               >
                 {language.label}
               </button>
@@ -747,7 +752,7 @@ const MobileSidebar = ({
 
     <div className="flex-1 overflow-y-auto p-6 space-y-6">
       {/* Profile Actions */}
-   
+
 
       {/* Menu Items */}
       <div className="space-y-2">
@@ -778,9 +783,9 @@ const MobileSidebar = ({
           );
         })}
       </div>
-   <div className="space-y-2">
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Profile & Settings</h3>
-        
+
         {/* Edit Profile Button */}
         <button
           onClick={() => {
