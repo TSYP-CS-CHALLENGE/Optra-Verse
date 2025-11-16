@@ -214,4 +214,4 @@ We welcome any questions, feedback, or inquiries related to OptraVerse. Please f
 
 Visit the OptraVerse website [here](https://test/).
 
-<img src="https://github.com/IEEECSENICarthage/NeoCarthago/blob/main/assets/banner.png" alt="Contact us" width="100%">
+<img src="screenshots/banner_footer.png" alt="Contact us" width="100%">
