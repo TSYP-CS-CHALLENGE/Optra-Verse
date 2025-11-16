@@ -14,7 +14,7 @@ import type { LoginCredentials } from "@/models/AuthModels";
 import { useAuth } from "@/contexts/AuthContext";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
-
+import CommentsButton from "@/components/Giscus/CommentsButton";
 
 export default function ConnexionPage() {
     const [showLogin, setShowLogin] = useState(true);
@@ -365,6 +365,7 @@ export default function ConnexionPage() {
             className={`min-h-screen bg-gradient-hero flex flex-col relative overflow-hidden transition-colors duration-300 ${isRTL ? 'rtl' : 'ltr'}`}
             dir={isRTL ? 'rtl' : 'ltr'}
         >
+            <CommentsButton />
             <div className={`fixed flex top-2 ${isRTL ? 'left-5' : 'right-5'} items-center gap-2 z-20`}>
                 <div className="relative">
                     <button

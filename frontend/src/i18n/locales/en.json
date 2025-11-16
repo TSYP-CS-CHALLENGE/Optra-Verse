@@ -298,6 +298,27 @@
       "contactSupport": "Contact support"
     }
   },
+  "giscus": {
+    "title": "Community Discussions",
+    "subtitle": "Powered by GitHub Discussions",
+    "comments": "Comments",
+    "about": "About",
+    "guidelines": "Guidelines",
+    "poweredBy": "Powered by GitHub",
+    "communityDriven": "Community Driven",
+    "howItWorks": "How it Works",
+    "githubRequired": "GitHub Account Required",
+    "publicDiscussions": "Public Discussions",
+    "reactions": "Reactions & Engagement",
+    "beRespectful": "Be Respectful",
+    "stayOnTopic": "Stay On Topic",
+    "noSpam": "No Spam",
+    "constructiveFeedback": "Constructive Feedback",
+    "reportIssue": "Report Issue",
+    "joinDiscussion": "Join Discussion",
+    "allDiscussions": "All Discussions",
+    "startDiscussion": "Start Discussion"
+  },
   "loading": {
     "title": "Preparing your experience...",
     "ariaLabel": "Loading content",

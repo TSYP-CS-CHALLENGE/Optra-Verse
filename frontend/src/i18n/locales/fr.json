@@ -330,5 +330,26 @@
     "language": "Langue",
     "theme": "Thème",
     "more": "Plus"
+  },
+    "giscus": {
+    "title": "Discussions Communautaires",
+    "subtitle": "Propulsé par GitHub Discussions",
+    "comments": "Commentaires",
+    "about": "À propos",
+    "guidelines": "Règles",
+    "poweredBy": "Propulsé par GitHub",
+    "communityDriven": "Communauté",
+    "howItWorks": "Comment ça marche",
+    "githubRequired": "Compte GitHub Requis",
+    "publicDiscussions": "Discussions Publiques",
+    "reactions": "Réactions & Engagement",
+    "beRespectful": "Soyez Respectueux",
+    "stayOnTopic": "Restez dans le Sujet",
+    "noSpam": "Pas de Spam",
+    "constructiveFeedback": "Retour Constructif",
+    "reportIssue": "Signaler un Problème",
+    "joinDiscussion": "Rejoindre la Discussion",
+    "allDiscussions": "Toutes les Discussions",
+    "startDiscussion": "Commencer une Discussion"
   }
 }
