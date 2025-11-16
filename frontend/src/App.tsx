@@ -21,10 +21,10 @@ import EmailVerification from './pages/Auth/EmailVerification';
 import PublicRoute from './guard/publicRoutes';
 import ProtectedRoute from './guard/protectedRoutes';
 import UnauthorizedPage from './pages/Auth/UnauthorizedPage';
-import InterviewsDashboard from './pages/interviewsDashboard';
-import Session from './pages/session';
-import SessionSetup from './pages/sessionSetup';
-import InterviewResume from './pages/interviewResume';
+import InterviewsDashboard from './components/jobseeker/Interview/interviewsDashboard';
+import Session from './components/jobseeker/Interview/session';
+import SessionSetup from './components/jobseeker/Interview/sessionSetup';
+import InterviewResume from './components/jobseeker/Interview/interviewResume';
 
 
 type AppView = 'splash' | 'onboarding' | 'main';
@@ -176,11 +176,12 @@ function AppContent() {
               <Route path="/login" element={<ConnexionPage />} />
               <Route path="/register" element={<ConnexionPage />} />
             </Route>
-            <Route path="/interviewsDashboard" element={<InterviewsDashboard />} />
-            <Route path="/Session" element={<Session />} />
-            <Route path="/session-setup" element={<SessionSetup />} />
-            <Route path="/interview-resume" element={<InterviewResume />} />
+
             <Route element={<ProtectedRoute allowedRoles={["jobseeker"]} />}>
+              <Route path="/interviewsDashboard" element={<InterviewsDashboard />} />
+              <Route path="/Session" element={<Session />} />
+              <Route path="/session-setup" element={<SessionSetup />} />
+              <Route path="/interview-resume" element={<InterviewResume />} />
               <Route path="/dashboard" element={<JobSeekerDashboard />}>
                 <Route index element={<Navigate to="/dashboard/enhance-cv" replace />} />
                 <Route path="enhance-cv" element={<EnhanceCV />} />

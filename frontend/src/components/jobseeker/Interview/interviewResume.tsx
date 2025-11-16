@@ -20,7 +20,7 @@ export default function InterviewResume() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" size="lg" onClick={() => navigate("/interviewsDashboard")} className="mb-6">
+        <Button variant="ghost" size="lg" onClick={() => navigate("/dashboard")} className="mb-6">
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Dashboard
         </Button>
