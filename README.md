@@ -70,6 +70,7 @@
 
   <!-- Comments -->
   <img src="https://img.shields.io/badge/Giscus-181717?logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/tlk.io-00C851?logo=chat&logoColor=white" />
 
 </p>
 
