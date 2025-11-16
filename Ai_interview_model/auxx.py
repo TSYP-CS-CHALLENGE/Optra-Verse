@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class StreamingWhisperTranscriber:
-    def __init__(self, model_name="base", input_source="websocket", websocket_host="localhost", websocket_port=8000):
+    def __init__(self, model_name="base", input_source="websocket", websocket_host="localhost", websocket_port=4000):
         """
         Initialize the streaming Whisper transcriber.
         
@@ -142,7 +142,7 @@ class StreamingWhisperTranscriber:
                     "status": "error",
                     "message": "Server error. Using defaults."
                 }))
-            """ static_intro = (
+            static_intro = (
                 "Hi, I'm your OptraVerse AI recruiter! "
                 "I'm here today to test your skills for this job. "
                 "So make yourself comfortable and introduce yourself!"
@@ -151,7 +151,7 @@ class StreamingWhisperTranscriber:
                 "transcription": "",
                 "response": generate_speak_and_sync_payload(static_intro)
             }
-            await websocket.send_text(json.dumps(payload)) """ 
+            await websocket.send_text(json.dumps(payload)) 
 
             try:
                 while True:

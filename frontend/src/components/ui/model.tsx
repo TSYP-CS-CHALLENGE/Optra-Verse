@@ -314,7 +314,7 @@ useEffect(() => {
   }, [message]);
 
 useEffect(() => {
-  const ws = new WebSocket('ws://localhost:8000/transcribe')
+  const ws = new WebSocket('ws://localhost:4000/transcribe')
   wsRef.current = ws
   startMicrophone() ;
   ws.onopen = () => {

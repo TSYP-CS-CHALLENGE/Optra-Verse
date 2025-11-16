@@ -44,7 +44,7 @@ def generate_speak_and_sync_payload(text: str, message_id: str = "from_whisper")
 
     synthesize_speech(text, f"{base_path}.mp3")
     run_command(f"ffmpeg -y -i {base_path}.mp3 {base_path}.wav")
-    run_command(rf"C:\Users\famil\Desktop\ghaith\Stage_2\TALAN\PItchy\Simulation_model\app\bin\Rhubarb\rhubarb.exe -f json -o {base_path}.json {base_path}.wav -r phonetic")
+    run_command(rf"C:\Users\talel\Downloads\drive-download-20251116T013754Z-1-001\Rhubarb-Lip-Sync-1.14.0-Windows\rhubarb.exe -f json -o {base_path}.json {base_path}.wav -r phonetic")
 
     audio_b64 = audio_file_to_base64(f"{base_path}.wav")
     lipsync_json = read_json_transcript(f"{base_path}.json")

@@ -11,7 +11,11 @@ scipy>=1.7.0
 # Additional utilities that might be needed
 requests>=2.25.0
 aiofiles>=0.7.0
-
+fastapi
+unuvicorn
+pyttsx3
+google.generativeai
+dotenv
 # Optional: For better performance
 # torch[cuda] - if you have NVIDIA GPU
 # ffmpeg-python - for additional audio format support
