@@ -8,8 +8,10 @@
    <div align="center">
      Watch simulations of various attack types to understand threat behaviors and see our solution in action in <a href="#" target="_blank"><b>this video</b></a>
     </div>
+     
 </div>
 
+  [![Giscus Comments](https://img.shields.io/badge/Comments-Giscus-blue?logo=github)](#)
 
 # 🌐 Optra Verse – AI‑Driven Career Empowerment Platform
 > Empowering job seekers in **Sub-Saharan Africa** & **MENA** with AI-powered career tools.
@@ -30,7 +32,6 @@
 - Match with relevant job opportunities  
 - Manage multilingual profiles (Arabic, French, English)  
 - Navigate a responsive, modern user interface  
-
 **Tech Stack:**  
 - **Frontend:** React + TypeScript + Vite  
 - **Backend:** Laravel + MySQL  
@@ -152,6 +153,44 @@
 
 ---
 
+
+## 💬 Community Feedback & Comments
+
+We use **Giscus** to enable discussions directly inside the project.  
+Share your feedback, report issues, suggest features all from the comment box below!
+
+<div align="center">
+  <img src="screenshots/giscus_preview.png" alt="Giscus Preview" width="70%" style="border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);" />
+  <br/>
+  <figcaption>Giscus Comment System Integrated in GitHub</figcaption>
+</div>
+
+---
+
+### 📝 Embedded Giscus Widget
+
+> 📌 *Note: GitHub README files **cannot execute scripts**, so the Giscus widget works only on GitHub Pages, your website, or inside your documentation site.  
+> But you can still show the snippet below for developers.*
+
+```html
+<!-- Giscus Comment Embed -->
+<script src="https://giscus.app/client.js"
+        data-repo="YOUR_USERNAME/YOUR_REPO"
+        data-repo-id="REPO_ID"
+        data-category="General"
+        data-category-id="CATEGORY_ID"
+        data-mapping="pathname"
+        data-strict="1"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+```
+
 ## 🖥 Screenshots
 
 ### Auth Screens
@@ -207,6 +246,7 @@
 
 ## 🏆 Vision
 **Optra Verse** aims to become the **#1 career development platform** in Sub-Saharan Africa and MENA by leveraging **cutting-edge technology** to connect talent with opportunity efficiently and meaningfully.
+
 
 ## 🚀 <a name="contact">Contact us</a>
 
