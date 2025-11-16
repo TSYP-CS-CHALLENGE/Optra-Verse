@@ -35,11 +35,15 @@
   <img src="https://img.shields.io/badge/SentenceTransformers-0A0A0A?logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/ChromaDB-9D00FF?logo=databricks&logoColor=white" />
   <img src="https://img.shields.io/badge/LlamaCloud-0000FF?logo=llama&logoColor=white" />
+  <img src="https://img.shields.io/badge/Whisper-FF6F61?logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/GoogleGenerativeAI-4285F4?logo=google&logoColor=white" />
 
   <!-- NLP / Utils -->
   <img src="https://img.shields.io/badge/Deep_Translator-FFCC00?logo=googletranslate&logoColor=black" />
   <img src="https://img.shields.io/badge/BeautifulSoup-4B8BBE?logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/Requests-000000?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pyttsx-008000?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white" />
 
   <!-- Data -->
   <img src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white" />
