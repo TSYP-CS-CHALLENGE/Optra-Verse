@@ -1,12 +1,12 @@
 <div align="center">
   <br />
-    <a href="#" target="_blank">
+    <a href="https://drive.google.com/file/d/16n9Ae4MOmlTbQ9BxCeEIimiDPG0N7CVp/view" target="_blank">
       <img src="screenshots/banner_header.png" alt="Project Banner">
     </a>
   <br />
 
    <div align="center">
-     Watch simulations of various attack types to understand threat behaviors and see our solution in action in <a href="#" target="_blank"><b>this video</b></a>
+     Watch simulations of various attack types to understand threat behaviors and see our solution in action in <a href="https://drive.google.com/file/d/16n9Ae4MOmlTbQ9BxCeEIimiDPG0N7CVp/view" target="_blank"><b>this video</b></a>
     </div>
      
 </div>
@@ -355,6 +355,6 @@ Share your feedback, report issues, suggest features all from the comment box be
 
 We welcome any questions, feedback, or inquiries related to OptraVerse. Please feel free to reach out to us through our email: optraverse@gmail.com
 
-Visit the OptraVerse website [here](https://test/).
+Visit the OptraVerse website [here](https://optra-verse-doc.vercel.app/).
 
 <img src="screenshots/banner_footer.png" alt="Contact us" width="100%">
